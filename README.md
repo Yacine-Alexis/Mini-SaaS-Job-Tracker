@@ -1,9 +1,16 @@
 # Mini-SaaS-Job-Tracker
 Mini application web pour suivre mes candidatures (compagnie, poste, statut, dates, notes), avec authentification, filtres et export CSV.
-
-# Job Tracker
-
 A lightweight web app to track job applications: company, role, status, dates, notes, and follow-ups.
+
+Installation :
+Node.js necessary to code
+
+To run,inside of terminal : 
+- cd app
+- npm run dev
+
+
+
 
 ## Features
 - Auth (register/login)
