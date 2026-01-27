@@ -1,0 +1,214 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ApplicationStage {
+  SAVED
+  APPLIED
+  INTERVIEW
+  OFFER
+  REJECTED
+}
+
+enum TaskStatus {
+  OPEN
+  DONE
+}
+
+enum Plan {
+  FREE
+  PRO
+}
+
+model User {
+  id           String           @id @default(cuid())
+  email        String           @unique
+  passwordHash String
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  deletedAt    DateTime?
+  plan                 Plan     @default(FREE)
+  stripeCustomerId     String?  @unique
+  stripeSubscriptionId String?  @unique
+  planUpdatedAt        DateTime?
+
+
+  applications    JobApplication[]
+  notes           Note[]
+  tasks           Task[]
+  contacts        Contact[]
+  attachmentLinks AttachmentLink[]
+  passwordResetTokens PasswordResetToken[]
+  auditLogs       AuditLog[]
+
+  @@index([createdAt])
+}
+
+model JobApplication {
+  id          String            @id @default(cuid())
+  userId      String
+  user        User              @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  company     String
+  title       String
+  location    String?
+  url         String?
+  salaryMin   Int?
+  salaryMax   Int?
+  stage       ApplicationStage  @default(SAVED)
+  appliedDate DateTime?
+  source      String?
+  tags        String[]          @default([])
+
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  deletedAt   DateTime?
+
+  notes           Note[]
+  tasks           Task[]
+  contacts        Contact[]
+  attachmentLinks AttachmentLink[]
+
+  @@index([userId, stage])
+  @@index([userId, company])
+  @@index([userId, createdAt])
+  @@index([userId, updatedAt])
+}
+
+model Note {
+  id             String         @id @default(cuid())
+  userId         String
+  applicationId  String
+
+  user           User           @relation(fields: [userId], references: [id], onDelete: Restrict)
+  application    JobApplication @relation(fields: [applicationId], references: [id], onDelete: Restrict)
+
+  content        String
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  deletedAt      DateTime?
+
+  @@index([userId, applicationId])
+  @@index([userId, createdAt])
+}
+
+model Task {
+  id             String         @id @default(cuid())
+  userId         String
+  applicationId  String
+
+  user           User           @relation(fields: [userId], references: [id], onDelete: Restrict)
+  application    JobApplication @relation(fields: [applicationId], references: [id], onDelete: Restrict)
+
+  title          String
+  dueDate        DateTime?
+  status         TaskStatus     @default(OPEN)
+
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  deletedAt      DateTime?
+
+  @@index([userId, applicationId])
+  @@index([userId, status])
+  @@index([userId, dueDate])
+}
+
+model Contact {
+  id            String         @id @default(cuid())
+  userId        String
+  applicationId String
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Restrict)
+  application   JobApplication @relation(fields: [applicationId], references: [id], onDelete: Restrict)
+
+  name          String
+  email         String?
+  phone         String?
+  role          String?        // recruiter, interviewer, hiring manager, etc.
+  company       String?        // optional override
+
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  deletedAt     DateTime?
+
+  @@index([userId, applicationId])
+  @@index([userId, createdAt])
+}
+
+model AttachmentLink {
+  id            String         @id @default(cuid())
+  userId        String
+  applicationId String
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Restrict)
+  application   JobApplication @relation(fields: [applicationId], references: [id], onDelete: Restrict)
+
+  label         String?
+  url           String
+
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  deletedAt     DateTime?
+
+  @@index([userId, applicationId])
+  @@index([userId, createdAt])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+enum AuditAction {
+  AUTH_LOGIN
+  AUTH_LOGOUT
+  AUTH_PASSWORD_RESET
+  APPLICATION_CREATED
+  APPLICATION_UPDATED
+  APPLICATION_DELETED
+  NOTE_CREATED
+  NOTE_UPDATED
+  NOTE_DELETED
+  TASK_CREATED
+  TASK_UPDATED
+  TASK_DELETED
+  CONTACT_CREATED
+  CONTACT_UPDATED
+  CONTACT_DELETED
+  LINK_CREATED
+  LINK_UPDATED
+  LINK_DELETED
+  EXPORT_CSV
+  BILLING_UPGRADED
+  BILLING_DOWNGRADED
+}
+
+model AuditLog {
+  id        String      @id @default(cuid())
+  userId    String
+  action    AuditAction
+  entity    String?
+  entityId  String?
+  meta      Json?
+  ip        String?
+  userAgent String?
+  createdAt DateTime    @default(now())
+
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([action, createdAt])
+}

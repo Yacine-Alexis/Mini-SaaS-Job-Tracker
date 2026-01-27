@@ -1,0 +1,28 @@
+services:
+  db:
+    image: postgres:16
+    container_name: jobtracker_db
+    environment:
+      POSTGRES_USER: jobtracker
+      POSTGRES_PASSWORD: jobtracker
+      POSTGRES_DB: jobtracker
+    ports:
+      - "5432:5432"
+    volumes:
+      - jobtracker_pgdata:/var/lib/postgresql/data
+
+  web:
+    build: .
+    container_name: jobtracker_web
+    depends_on:
+      - db
+    environment:
+      # Important: inside Docker, host is the service name "db"
+      DATABASE_URL: postgresql://jobtracker:jobtracker@db:5432/jobtracker?schema=public
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+    ports:
+      - "3000:3000"
+
+volumes:
+  jobtracker_pgdata:

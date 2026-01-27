@@ -9,7 +9,11 @@ To run,inside of terminal :
 - cd app
 - npm run dev
 
-
+cd web
+Copy-Item .env.example .env
+docker compose -f docker.compose.yml up -d
+npm run prisma:migrate
+npm run dev
 
 
 ## Features
