@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
 
 jobs:
@@ -51,6 +51,7 @@ jobs:
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
+        working-directory: web
 
       - name: E2E
         run: npm run test:e2e

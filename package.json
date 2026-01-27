@@ -1,8 +1,15 @@
 {
-  "devDependencies": {
-    "prisma": "^5.22.0"
+  "scripts": {
+    "lint": "npm run lint --prefix web",
+    "typecheck": "npm run typecheck --prefix web",
+    "test:e2e": "npm run test:e2e --prefix web",
+    "test:unit": "npm run test:unit --prefix web",
+    "build": "npm run build --prefix web",
+    "dev": "npm run dev --prefix web",
+    "postinstall": "npm install --prefix web && npx prisma generate"
   },
-  "dependencies": {
-    "@prisma/client": "^5.22.0"
+  "devDependencies": {
+    "@prisma/client": "^5.19.1",
+    "prisma": "^5.19.1"
   }
 }
