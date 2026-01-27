@@ -15,7 +15,7 @@
     "prisma:studio": "prisma studio",
     "prisma:seed": "npx ts-node ../prisma/seed.ts",
     "test:unit": "vitest",
-    "test:e2e": "playwright test",
+    "test:e2e": "npx playwright test",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
