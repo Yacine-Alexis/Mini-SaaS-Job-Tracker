@@ -45,6 +45,23 @@ enum JobType {
   INTERNSHIP
 }
 
+enum InterviewType {
+  PHONE
+  VIDEO
+  ONSITE
+  TECHNICAL
+  BEHAVIORAL
+  FINAL
+  OTHER
+}
+
+enum InterviewResult {
+  PENDING
+  PASSED
+  FAILED
+  CANCELLED
+}
+
 model User {
   id           String           @id @default(cuid())
   email        String           @unique
@@ -63,6 +80,7 @@ model User {
   tasks           Task[]
   contacts        Contact[]
   attachmentLinks AttachmentLink[]
+  interviews      Interview[]
   passwordResetTokens PasswordResetToken[]
   auditLogs       AuditLog[]
 
@@ -102,6 +120,7 @@ model JobApplication {
   tasks           Task[]
   contacts        Contact[]
   attachmentLinks AttachmentLink[]
+  interviews      Interview[]
 
   @@index([userId, stage])
   @@index([userId, company])
@@ -193,6 +212,32 @@ model AttachmentLink {
   @@index([userId, createdAt])
 }
 
+model Interview {
+  id             String          @id @default(cuid())
+  userId         String
+  applicationId  String
+
+  user           User            @relation(fields: [userId], references: [id], onDelete: Restrict)
+  application    JobApplication  @relation(fields: [applicationId], references: [id], onDelete: Restrict)
+
+  scheduledAt    DateTime        // Interview date/time
+  duration       Int?            // Duration in minutes
+  type           InterviewType   @default(VIDEO)
+  location       String?         // Physical address or video link
+  interviewers   String[]        @default([])
+  notes          String?         // Preparation notes
+  feedback       String?         // Post-interview feedback
+  result         InterviewResult @default(PENDING)
+
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  deletedAt      DateTime?
+
+  @@index([userId, applicationId])
+  @@index([userId, scheduledAt])
+  @@index([applicationId, deletedAt])
+}
+
 model PasswordResetToken {
   id        String   @id @default(cuid())
   userId    String
@@ -225,6 +270,9 @@ enum AuditAction {
   LINK_CREATED
   LINK_UPDATED
   LINK_DELETED
+  INTERVIEW_CREATED
+  INTERVIEW_UPDATED
+  INTERVIEW_DELETED
   EXPORT_CSV
   BILLING_UPGRADED
   BILLING_DOWNGRADED

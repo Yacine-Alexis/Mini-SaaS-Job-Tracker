@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ApplicationStage } from "@prisma/client";
+import { ApplicationStage, Priority, RemoteType, JobType } from "@prisma/client";
 import { useToast } from "@/components/ui/Toast";
 
 type Mode = "create" | "edit";
@@ -18,6 +18,13 @@ type FormState = {
   appliedDate: string;
   source: string;
   tags: string;
+  // Extended fields
+  priority: Priority | "";
+  remoteType: RemoteType | "";
+  jobType: JobType | "";
+  description: string;
+  nextFollowUp: string;
+  rejectionReason: string;
 };
 
 type FieldErrors = Partial<Record<keyof FormState | "general", string>>;
@@ -34,7 +41,14 @@ const empty: FormState = {
   stage: ApplicationStage.SAVED,
   appliedDate: "",
   source: "",
-  tags: ""
+  tags: "",
+  // Extended fields
+  priority: "",
+  remoteType: "",
+  jobType: "",
+  description: "",
+  nextFollowUp: "",
+  rejectionReason: ""
 };
 
 const SOURCE_OPTIONS = [
@@ -98,7 +112,14 @@ export default function ApplicationForm({ mode, id }: { mode: Mode; id?: string 
         stage: it.stage ?? ApplicationStage.SAVED,
         appliedDate: it.appliedDate ? new Date(it.appliedDate).toISOString().slice(0, 10) : "",
         source: it.source ?? "",
-        tags: Array.isArray(it.tags) ? it.tags.join(", ") : ""
+        tags: Array.isArray(it.tags) ? it.tags.join(", ") : "",
+        // Extended fields
+        priority: it.priority ?? "",
+        remoteType: it.remoteType ?? "",
+        jobType: it.jobType ?? "",
+        description: it.description ?? "",
+        nextFollowUp: it.nextFollowUp ? new Date(it.nextFollowUp).toISOString().slice(0, 10) : "",
+        rejectionReason: it.rejectionReason ?? ""
       });
       setLoading(false);
     })();
@@ -228,7 +249,14 @@ export default function ApplicationForm({ mode, id }: { mode: Mode; id?: string 
       tags: form.tags
         .split(",")
         .map((t) => t.trim())
-        .filter(Boolean)
+        .filter(Boolean),
+      // Extended fields
+      priority: form.priority || null,
+      remoteType: form.remoteType || null,
+      jobType: form.jobType || null,
+      description: form.description.trim() || null,
+      nextFollowUp: form.nextFollowUp ? new Date(form.nextFollowUp).toISOString() : null,
+      rejectionReason: form.rejectionReason.trim() || null
     };
 
     try {
@@ -463,6 +491,86 @@ export default function ApplicationForm({ mode, id }: { mode: Mode; id?: string 
         </div>
       </div>
 
+      {/* Extended Details */}
+      <div>
+        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4 flex items-center gap-2">
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs">5</span>
+          Additional Details
+          <span className="text-xs font-normal text-zinc-500 dark:text-zinc-400">(Optional)</span>
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <SelectField
+            label="Priority"
+            value={form.priority}
+            onChange={(v) => set("priority", v as Priority | "")}
+            options={[
+              { value: "", label: "Select priority..." },
+              { value: Priority.LOW, label: "🟢 Low" },
+              { value: Priority.MEDIUM, label: "🟡 Medium" },
+              { value: Priority.HIGH, label: "🔴 High" }
+            ]}
+            isValid={!!form.priority}
+          />
+          <SelectField
+            label="Work Type"
+            value={form.remoteType}
+            onChange={(v) => set("remoteType", v as RemoteType | "")}
+            options={[
+              { value: "", label: "Select work type..." },
+              { value: RemoteType.REMOTE, label: "🏠 Remote" },
+              { value: RemoteType.HYBRID, label: "🔀 Hybrid" },
+              { value: RemoteType.ONSITE, label: "🏢 On-site" }
+            ]}
+            isValid={!!form.remoteType}
+          />
+          <SelectField
+            label="Job Type"
+            value={form.jobType}
+            onChange={(v) => set("jobType", v as JobType | "")}
+            options={[
+              { value: "", label: "Select job type..." },
+              { value: JobType.FULL_TIME, label: "Full-time" },
+              { value: JobType.PART_TIME, label: "Part-time" },
+              { value: JobType.CONTRACT, label: "Contract" },
+              { value: JobType.FREELANCE, label: "Freelance" },
+              { value: JobType.INTERNSHIP, label: "Internship" }
+            ]}
+            isValid={!!form.jobType}
+          />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <InputField
+            label="Follow-up Date"
+            type="date"
+            value={form.nextFollowUp}
+            onChange={(v) => set("nextFollowUp", v)}
+            onBlur={() => markTouched("nextFollowUp")}
+            isValid={touched.nextFollowUp && !!form.nextFollowUp}
+          />
+          {form.stage === ApplicationStage.REJECTED && (
+            <InputField
+              label="Rejection Reason"
+              value={form.rejectionReason}
+              onChange={(v) => set("rejectionReason", v)}
+              onBlur={() => markTouched("rejectionReason")}
+              placeholder="e.g., Position filled, not enough experience"
+              isValid={touched.rejectionReason && !!form.rejectionReason.trim()}
+            />
+          )}
+        </div>
+        <div className="mt-4">
+          <TextareaField
+            label="Job Description"
+            value={form.description}
+            onChange={(v) => set("description", v)}
+            onBlur={() => markTouched("description")}
+            placeholder="Paste the job description here for reference..."
+            rows={4}
+            isValid={touched.description && !!form.description.trim()}
+          />
+        </div>
+      </div>
+
       {/* Actions */}
       <div className="flex items-center gap-3 pt-4 border-t border-zinc-100">
         <button
@@ -643,6 +751,41 @@ function SelectField({ label, id, value, onChange, onBlur, options, isValid }: S
           </span>
         )}
       </div>
+    </div>
+  );
+}
+
+type TextareaFieldProps = {
+  label: string;
+  id?: string;
+  value: string;
+  onChange: (value: string) => void;
+  onBlur?: () => void;
+  placeholder?: string;
+  rows?: number;
+  isValid?: boolean;
+};
+
+function TextareaField({ label, id, value, onChange, onBlur, placeholder, rows = 3, isValid }: TextareaFieldProps) {
+  const textareaId = id ?? label.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  return (
+    <div>
+      <label htmlFor={textareaId} className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">{label}</label>
+      <textarea
+        id={textareaId}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={onBlur}
+        placeholder={placeholder}
+        rows={rows}
+        className={`
+          w-full rounded-lg border px-3 py-2.5 text-sm outline-none transition-all resize-y text-zinc-900 dark:text-zinc-100
+          ${isValid
+            ? "border-green-300 bg-green-50/50 dark:bg-green-900/20 dark:border-green-700 focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+            : "border-zinc-300 bg-white dark:bg-zinc-800 dark:border-zinc-600 focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20"
+          }
+        `}
+      />
     </div>
   );
 }

@@ -9,7 +9,7 @@
     "postinstall": "npm install --prefix web && npx prisma generate"
   },
   "devDependencies": {
-    "@prisma/client": "^5.19.1",
-    "prisma": "^5.19.1"
+    "@prisma/client": "^5.22.0",
+    "prisma": "^5.22.0"
   }
 }

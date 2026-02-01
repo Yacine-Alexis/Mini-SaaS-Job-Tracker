@@ -7,6 +7,7 @@ import TasksPanel from "@/components/TasksPanel";
 import ApplicationQuickEdit from "@/components/ApplicationQuickEdit";
 import ContactsPanel from "@/components/ContactsPanel";
 import AttachmentLinksPanel from "@/components/AttachmentLinksPanel";
+import InterviewsPanel from "@/components/InterviewsPanel";
 import StageProgressIndicator from "@/components/StageProgressIndicator";
 import SalaryDisplay, { SalaryRangeBar } from "@/components/SalaryDisplay";
 import { ApplicationStage } from "@prisma/client";
@@ -112,6 +113,7 @@ export default function ApplicationDetailsClient({ id }: { id: string }) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <NotesPanel applicationId={id} />
         <TasksPanel applicationId={id} />
+        <InterviewsPanel applicationId={id} />
         <ContactsPanel applicationId={id} />
         <AttachmentLinksPanel applicationId={id} />
         </div>

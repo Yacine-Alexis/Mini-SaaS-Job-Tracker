@@ -33,59 +33,83 @@ export default async function DashboardPage() {
 
   const userId = (session.user as { id: string }).id;
 
-  const apps = await prisma.jobApplication.findMany({
-    where: { userId, deletedAt: null },
-    select: { stage: true, createdAt: true, salaryMin: true, salaryMax: true }
-  });
-
-  const tasks = await prisma.task.findMany({
-    where: { application: { userId, deletedAt: null }, deletedAt: null, status: "OPEN" },
-    orderBy: { dueDate: "asc" },
-    take: 5,
-    include: { application: { select: { company: true } } }
-  });
-
-  const recentApps = await prisma.jobApplication.findMany({
-    where: { userId, deletedAt: null },
-    orderBy: { updatedAt: "desc" },
-    take: 5,
-    select: { id: true, company: true, title: true, stage: true, updatedAt: true }
-  });
-
-  const stageCounts: Record<string, number> = {};
-  for (const a of apps) stageCounts[a.stage] = (stageCounts[a.stage] ?? 0) + 1;
-
-  const total = apps.length;
-  const isEmpty = total === 0;
-
   const now = new Date();
   const thisWeek = startOfISOWeek(now);
-  const weeklyApplications: { weekStart: string; count: number }[] = [];
+
+  // Use database aggregations instead of loading all applications into memory
+  const [
+    stageCountsRaw,
+    total,
+    tasks,
+    recentApps,
+    weeklyData,
+    salaryStats
+  ] = await Promise.all([
+    // Count by stage using groupBy
+    prisma.jobApplication.groupBy({
+      by: ["stage"],
+      where: { userId, deletedAt: null },
+      _count: { stage: true }
+    }),
+    // Total count
+    prisma.jobApplication.count({
+      where: { userId, deletedAt: null }
+    }),
+    // Tasks with upcoming due dates
+    prisma.task.findMany({
+      where: { application: { userId, deletedAt: null }, deletedAt: null, status: "OPEN" },
+      orderBy: { dueDate: "asc" },
+      take: 5,
+      include: { application: { select: { company: true } } }
+    }),
+    // Recent applications
+    prisma.jobApplication.findMany({
+      where: { userId, deletedAt: null },
+      orderBy: { updatedAt: "desc" },
+      take: 5,
+      select: { id: true, company: true, title: true, stage: true, updatedAt: true }
+    }),
+    // Weekly counts using parallel queries (database aggregation)
+    (async () => {
+      const weekPromises = [];
+      for (let i = 7; i >= 0; i--) {
+        const ws = new Date(thisWeek);
+        ws.setUTCDate(ws.getUTCDate() - i * 7);
+        const we = new Date(ws);
+        we.setUTCDate(we.getUTCDate() + 7);
+        weekPromises.push(
+          prisma.jobApplication.count({
+            where: { userId, deletedAt: null, createdAt: { gte: ws, lt: we } }
+          }).then(count => ({ weekStart: ws.toISOString().slice(0, 10), count }))
+        );
+      }
+      return Promise.all(weekPromises);
+    })(),
+    // Average salary using database aggregation
+    prisma.jobApplication.aggregate({
+      where: { userId, deletedAt: null, OR: [{ salaryMin: { not: null } }, { salaryMax: { not: null } }] },
+      _avg: { salaryMin: true, salaryMax: true },
+      _count: true
+    })
+  ]);
+
+  // Transform stage counts from array to object
+  const stageCounts: Record<string, number> = {};
+  for (const item of stageCountsRaw) {
+    stageCounts[item.stage] = item._count.stage;
+  }
+
+  const isEmpty = total === 0;
+  const weeklyApplications = weeklyData;
   const appliedLike = (stageCounts["APPLIED"] ?? 0) + (stageCounts["INTERVIEW"] ?? 0) + (stageCounts["OFFER"] ?? 0) + (stageCounts["REJECTED"] ?? 0);
   const responded = (stageCounts["INTERVIEW"] ?? 0) + (stageCounts["OFFER"] ?? 0) + (stageCounts["REJECTED"] ?? 0);
   const responseRate = appliedLike > 0 ? Math.round((responded / appliedLike) * 100) : 0;
   const active = total - (stageCounts["REJECTED"] ?? 0);
 
-  // Calculate average salary
-  const salaries = apps.filter(a => a.salaryMin || a.salaryMax).map(a => {
-    if (a.salaryMin && a.salaryMax) return (a.salaryMin + a.salaryMax) / 2;
-    return a.salaryMin || a.salaryMax || 0;
-  });
-  const avgSalary = salaries.length > 0 ? Math.round(salaries.reduce((a, b) => a + b, 0) / salaries.length) : 0;
-
-  for (let i = 7; i >= 0; i--) {
-    const ws = new Date(thisWeek);
-    ws.setUTCDate(ws.getUTCDate() - i * 7);
-    const we = new Date(ws);
-    we.setUTCDate(we.getUTCDate() + 7);
-
-    const count = apps.filter((a) => a.createdAt >= ws && a.createdAt < we).length;
-
-    weeklyApplications.push({
-      weekStart: ws.toISOString().slice(0, 10),
-      count
-    });
-  }
+  // Calculate average salary from aggregation
+  const avgMin = salaryStats._avg.salaryMin ?? 0;
+  const avgMax = salaryStats._avg.salaryMax ?? 0;
+  const avgSalary = salaryStats._count > 0 ? Math.round((avgMin + avgMax) / 2) : 0;
 
   return (
     <div className="space-y-6">
