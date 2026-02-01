@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireUserOr401 } from "@/lib/auth";
+import { requireUserWithPlanOr401 } from "@/lib/auth";
 import { jsonError, zodToDetails } from "@/lib/errors";
 import { importPayloadSchema } from "@/lib/validators/import";
-import { getUserPlan, isPro, LIMITS } from "@/lib/plan";
+import { isPro, LIMITS } from "@/lib/plan";
 import { AuditAction } from "@prisma/client";
 import { audit } from "@/lib/audit";
 import { enforceRateLimitAsync } from "@/lib/rateLimit";
@@ -13,14 +13,13 @@ export async function POST(req: NextRequest) {
   const rl = await enforceRateLimitAsync(req, "applications:import", 5, 60_000);
   if (rl) return rl;
 
-  const { userId, error } = await requireUserOr401();
+  // Plan is cached in JWT - no DB query needed
+  const { userId, plan, error } = await requireUserWithPlanOr401();
   if (error) return error;
 
   const raw = await req.json().catch(() => null);
   const parsed = importPayloadSchema.safeParse(raw);
   if (!parsed.success) return jsonError(400, "VALIDATION_ERROR", "Invalid import payload", zodToDetails(parsed.error));
-
-  const plan = await getUserPlan(userId);
 
   const existingCount = await prisma.jobApplication.count({ where: { userId, deletedAt: null } });
   const maxAllowed = isPro(plan) ? Number.POSITIVE_INFINITY : LIMITS.FREE_MAX_APPLICATIONS;

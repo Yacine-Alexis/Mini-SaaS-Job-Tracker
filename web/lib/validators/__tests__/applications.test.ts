@@ -2,7 +2,8 @@ import { describe, it, expect } from "vitest";
 import {
   applicationCreateSchema,
   applicationUpdateSchema,
-  applicationListQuerySchema
+  applicationListQuerySchema,
+  validateSalaryRange
 } from "@/lib/validators/applications";
 import { ApplicationStage } from "@prisma/client";
 
@@ -58,16 +59,20 @@ describe("applicationCreateSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("validates salaryMin <= salaryMax", () => {
+  it("validates salaryMin <= salaryMax via helper function", () => {
+    // Note: The schema itself doesn't validate salaryMin <= salaryMax
+    // This is done manually in routes using validateSalaryRange()
     const result = applicationCreateSchema.safeParse({
       company: "Google",
       title: "Engineer",
       salaryMin: 200000,
       salaryMax: 100000
     });
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(result.error.issues[0].path).toContain("salaryMin");
+    // Schema accepts it - validation happens in route
+    expect(result.success).toBe(true);
+    // Use helper function to validate
+    if (result.success) {
+      expect(validateSalaryRange(result.data)).toBe(false);
     }
   });
 

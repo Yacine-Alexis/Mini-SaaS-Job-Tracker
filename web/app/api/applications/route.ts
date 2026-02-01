@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { jsonError, zodToDetails } from "@/lib/errors";
-import { requireUserOr401 } from "@/lib/auth";
+import { requireUserOr401, requireUserWithPlanOr401 } from "@/lib/auth";
 import { applicationCreateSchema, applicationListQuerySchema, validateSalaryRange } from "@/lib/validators/applications";
 import { buildApplicationFilter } from "@/lib/validators/shared";
 import { paginationQuerySchema, toSkipTake } from "@/lib/pagination";
-import { getUserPlan, isPro, LIMITS } from "@/lib/plan";
+import { isPro, LIMITS } from "@/lib/plan";
 import { AuditAction } from "@prisma/client";
 import { audit } from "@/lib/audit";
 import { enforceRateLimitAsync } from "@/lib/rateLimit";
@@ -77,10 +77,10 @@ export async function POST(req: NextRequest) {
   const rl = await enforceRateLimitAsync(req, "applications:create", 60, 60_000);
   if (rl) return rl;
 
-  const { userId, error } = await requireUserOr401();
+  // Plan is cached in JWT - no DB query needed
+  const { userId, plan, error } = await requireUserWithPlanOr401();
   if (error) return error;
 
-  const plan = await getUserPlan(userId);
   if (!isPro(plan)) {
     const count = await prisma.jobApplication.count({ where: { userId, deletedAt: null } });
     if (count >= LIMITS.FREE_MAX_APPLICATIONS) {

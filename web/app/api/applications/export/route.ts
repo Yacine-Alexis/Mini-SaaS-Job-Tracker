@@ -1,9 +1,9 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireUserOr401 } from "@/lib/auth";
+import { requireUserWithPlanOr401 } from "@/lib/auth";
 import { jsonError, zodToDetails } from "@/lib/errors";
 import { applicationListQuerySchema } from "@/lib/validators/applications";
-import { getUserPlan, isPro } from "@/lib/plan";
+import { isPro } from "@/lib/plan";
 import { audit } from "@/lib/audit";
 import { AuditAction } from "@prisma/client";
 
@@ -16,11 +16,11 @@ function csvEscape(value: unknown) {
 }
 
 export async function GET(req: NextRequest) {
-  const { userId, error } = await requireUserOr401();
+  // Plan is cached in JWT - no DB query needed
+  const { userId, plan, error } = await requireUserWithPlanOr401();
   if (error) return error;
 
   // Pro-only feature
-  const plan = await getUserPlan(userId);
   if (!isPro(plan)) {
     return jsonError(403, "PLAN_REQUIRED", "Upgrade to Pro to export CSV.");
   }
