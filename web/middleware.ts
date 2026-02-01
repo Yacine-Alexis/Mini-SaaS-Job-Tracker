@@ -23,6 +23,14 @@ function getAllowedOrigins(): string[] {
   return origins;
 }
 
+// Check if origin is from a browser extension
+function isExtensionOrigin(origin: string | null): boolean {
+  if (!origin) return false;
+  return origin.startsWith("chrome-extension://") || 
+         origin.startsWith("moz-extension://") ||
+         origin.startsWith("safari-extension://");
+}
+
 // Check if request is a state-changing method
 function isStateChangingMethod(method: string): boolean {
   return ["POST", "PUT", "PATCH", "DELETE"].includes(method.toUpperCase());
@@ -40,16 +48,31 @@ function shouldSkipCsrf(pathname: string): boolean {
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  const origin = req.headers.get("origin");
+  
+  // Handle CORS preflight for browser extensions
+  if (req.method === "OPTIONS" && isExtensionOrigin(origin)) {
+    return new NextResponse(null, {
+      status: 204,
+      headers: {
+        "Access-Control-Allow-Origin": origin!,
+        "Access-Control-Allow-Credentials": "true",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        "Access-Control-Max-Age": "86400",
+      },
+    });
+  }
   
   // CSRF Protection for state-changing requests
   if (isStateChangingMethod(req.method) && !shouldSkipCsrf(pathname)) {
-    const origin = req.headers.get("origin");
     const allowedOrigins = getAllowedOrigins();
     
     // If origin header is present, validate it
     if (origin && allowedOrigins.length > 0) {
       const isAllowed = allowedOrigins.some(allowed => origin === allowed);
-      if (!isAllowed) {
+      const isExtension = isExtensionOrigin(origin);
+      if (!isAllowed && !isExtension) {
         console.warn(`[CSRF] Blocked request from origin: ${origin}, allowed: ${allowedOrigins.join(", ")}`);
         return NextResponse.json(
           { error: { code: "FORBIDDEN", message: "Invalid origin" } },
@@ -60,6 +83,14 @@ export function middleware(req: NextRequest) {
   }
 
   const res = NextResponse.next();
+  
+  // Add CORS headers for browser extension support
+  if (isExtensionOrigin(origin)) {
+    res.headers.set("Access-Control-Allow-Origin", origin!);
+    res.headers.set("Access-Control-Allow-Credentials", "true");
+    res.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+    res.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  }
 
   res.headers.set("X-Content-Type-Options", "nosniff");
   res.headers.set("X-Frame-Options", "DENY");

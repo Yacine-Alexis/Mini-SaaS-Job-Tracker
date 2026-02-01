@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JobTracker</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+        </svg>
+        <span>JobTracker</span>
+      </div>
+    </header>
+
+    <!-- Auth Section (shown when logged out) -->
+    <div id="auth-section" class="section hidden">
+      <div class="auth-message">
+        <p>Sign in to save jobs to your account</p>
+        <input type="text" id="api-url" placeholder="Your JobTracker URL" value="http://localhost:3000">
+        <button id="connect-btn" class="btn btn-primary">Connect</button>
+      </div>
+    </div>
+
+    <!-- Connected Section (shown when logged in) -->
+    <div id="connected-section" class="section hidden">
+      <!-- Job Preview -->
+      <div id="job-preview" class="job-preview">
+        <div class="preview-loading">
+          <div class="spinner"></div>
+          <span>Detecting job info...</span>
+        </div>
+      </div>
+
+      <!-- Save Form -->
+      <form id="save-form" class="save-form hidden">
+        <div class="form-group">
+          <label for="company">Company</label>
+          <input type="text" id="company" required>
+        </div>
+        <div class="form-group">
+          <label for="title">Job Title</label>
+          <input type="text" id="title" required>
+        </div>
+        <div class="form-group">
+          <label for="location">Location</label>
+          <input type="text" id="location" placeholder="Optional">
+        </div>
+        <div class="form-group">
+          <label for="stage">Stage</label>
+          <select id="stage">
+            <option value="SAVED">Saved</option>
+            <option value="APPLIED">Applied</option>
+            <option value="INTERVIEW">Interview</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="tags">Tags</label>
+          <input type="text" id="tags" placeholder="remote, startup, etc.">
+        </div>
+        <button type="submit" id="save-btn" class="btn btn-primary btn-full">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
+            <polyline points="17,21 17,13 7,13 7,21"/>
+            <polyline points="7,3 7,8 15,8"/>
+          </svg>
+          Save to JobTracker
+        </button>
+      </form>
+
+      <!-- Success Message -->
+      <div id="success-message" class="success-message hidden">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+          <polyline points="22,4 12,14.01 9,11.01"/>
+        </svg>
+        <h3>Job Saved!</h3>
+        <p>Added to your JobTracker</p>
+        <button id="view-btn" class="btn btn-secondary">View in JobTracker</button>
+        <button id="save-another-btn" class="btn btn-text">Save Another</button>
+      </div>
+
+      <!-- Error Message -->
+      <div id="error-message" class="error-message hidden">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span id="error-text">Something went wrong</span>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <span id="user-email" class="user-email"></span>
+      <button id="disconnect-btn" class="btn btn-text btn-sm hidden">Disconnect</button>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
