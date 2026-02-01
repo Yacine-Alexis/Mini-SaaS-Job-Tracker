@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ApplicationStage } from "@prisma/client";
+import { useToast } from "@/components/ui/Toast";
 
 type Mode = "create" | "edit";
 
@@ -61,6 +62,7 @@ const LOCATION_SUGGESTIONS = [
 ];
 
 export default function ApplicationForm({ mode, id }: { mode: Mode; id?: string }) {
+  const { addToast } = useToast();
   const [form, setForm] = useState<FormState>(empty);
   const [loading, setLoading] = useState(mode === "edit");
   const [saving, setSaving] = useState(false);
@@ -259,7 +261,18 @@ export default function ApplicationForm({ mode, id }: { mode: Mode; id?: string 
         return;
       }
 
-      window.location.href = "/applications";
+      // Show success toast before redirect
+      addToast({
+        type: "success",
+        title: mode === "create" 
+          ? "Application created successfully!" 
+          : "Application updated successfully!"
+      });
+
+      // Small delay to allow toast to display before redirect
+      setTimeout(() => {
+        window.location.href = "/applications";
+      }, 300);
     } catch {
       setErrors({ general: "Network error. Please check your connection and try again." });
     } finally {

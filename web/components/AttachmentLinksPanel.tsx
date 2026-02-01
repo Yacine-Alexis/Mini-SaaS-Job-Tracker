@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ConfirmModal } from "@/components/ui/Modal";
+import EmptyState from "@/components/ui/EmptyState";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 type LinkItem = {
   id: string;
@@ -8,6 +11,20 @@ type LinkItem = {
   url: string;
   createdAt: string;
 };
+
+function LinksSkeleton() {
+  return (
+    <div className="space-y-2">
+      {[1, 2].map((i) => (
+        <div key={i} className="rounded-lg border border-zinc-200 dark:border-zinc-700 p-3">
+          <Skeleton className="h-3 w-20 mb-2" />
+          <Skeleton className="h-4 w-24 mb-1" />
+          <Skeleton className="h-3 w-48" />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function AttachmentLinksPanel({ applicationId }: { applicationId: string }) {
   const [items, setItems] = useState<LinkItem[]>([]);
@@ -17,6 +34,9 @@ export default function AttachmentLinksPanel({ applicationId }: { applicationId:
   const [label, setLabel] = useState("");
   const [url, setUrl] = useState("");
   const [saving, setSaving] = useState(false);
+
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -68,12 +88,18 @@ export default function AttachmentLinksPanel({ applicationId }: { applicationId:
     }
   }
 
-  async function del(id: string) {
-    if (!confirm("Delete this link?")) return;
-    const res = await fetch(`/api/attachment-links?id=${encodeURIComponent(id)}`, { method: "DELETE" });
-    const data = await res.json();
-    if (!res.ok) setErr(data?.error?.message ?? "Delete failed");
-    else await load();
+  async function confirmDelete() {
+    if (!deleteId) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/attachment-links?id=${encodeURIComponent(deleteId)}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) setErr(data?.error?.message ?? "Delete failed");
+      else await load();
+    } finally {
+      setDeleting(false);
+      setDeleteId(null);
+    }
   }
 
   return (
@@ -85,24 +111,51 @@ export default function AttachmentLinksPanel({ applicationId }: { applicationId:
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
         <input className="input" placeholder="Label (optional)" value={label} onChange={(e) => setLabel(e.target.value)} />
-        <input className="input" placeholder="https://…" value={url} onChange={(e) => setUrl(e.target.value)} />
+        <input 
+          className="input" 
+          placeholder="https://…" 
+          value={url} 
+          onChange={(e) => setUrl(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && url.trim()) {
+              e.preventDefault();
+              add();
+            }
+          }}
+        />
         <button className="btn btn-primary md:col-span-2" onClick={add} disabled={saving || !url.trim()}>
           {saving ? "Adding…" : "Add link"}
         </button>
       </div>
 
-      {loading && <div className="text-sm text-zinc-600">Loading…</div>}
       {err && <div className="text-sm text-red-600">{err}</div>}
 
-      {!loading && !err && items.length === 0 && (
-        <div className="text-sm text-zinc-600">No links yet.</div>
+      {loading ? (
+        <LinksSkeleton />
+      ) : items.length === 0 ? (
+        <EmptyState
+          icon="links"
+          title="No links yet"
+          description="Add links to resumes, portfolios, job postings, or other relevant documents."
+        />
+      ) : (
+        <div className="space-y-2">
+          {items.map((l) => (
+            <LinkRow key={l.id} item={l} onChanged={load} onDelete={(id) => setDeleteId(id)} />
+          ))}
+        </div>
       )}
 
-      <div className="space-y-2">
-        {items.map((l) => (
-          <LinkRow key={l.id} item={l} onChanged={load} onDelete={del} />
-        ))}
-      </div>
+      <ConfirmModal
+        open={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={confirmDelete}
+        title="Delete link"
+        message="Are you sure you want to delete this link? This action cannot be undone."
+        confirmText="Delete"
+        variant="danger"
+        loading={deleting}
+      />
     </div>
   );
 }
@@ -114,7 +167,7 @@ function LinkRow({
 }: {
   item: LinkItem;
   onChanged: () => Promise<void>;
-  onDelete: (id: string) => Promise<void>;
+  onDelete: (id: string) => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [label, setLabel] = useState(item.label ?? "");
@@ -150,20 +203,20 @@ function LinkRow({
   }
 
   return (
-    <div className="rounded-lg border border-zinc-200 p-3">
+    <div className="rounded-lg border border-zinc-200 dark:border-zinc-700 p-3">
       <div className="text-xs text-zinc-500">{new Date(item.createdAt).toLocaleString()}</div>
 
       {!editing ? (
         <>
           <div className="mt-1 text-sm font-medium">{item.label ?? "Link"}</div>
           <div className="mt-1 text-sm">
-            <a className="underline break-all" href={item.url} target="_blank" rel="noreferrer">
+            <a className="underline break-all text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300" href={item.url} target="_blank" rel="noreferrer">
               {item.url}
             </a>
           </div>
           <div className="mt-2 flex gap-2">
-            <button className="btn" onClick={() => setEditing(true)}>Edit</button>
-            <button className="btn" onClick={() => onDelete(item.id)}>Delete</button>
+            <button className="btn text-xs" onClick={() => setEditing(true)}>Edit</button>
+            <button className="btn text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20" onClick={() => onDelete(item.id)}>Delete</button>
           </div>
         </>
       ) : (

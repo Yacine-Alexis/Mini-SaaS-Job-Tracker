@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import Link from "next/link";
 import { ApplicationStage } from "@prisma/client";
 import { formatDateTime } from "@/lib/dateUtils";
+import { useDebounce } from "@/lib/hooks";
 import { ConfirmModal } from "@/components/ui/Modal";
 import EmptyState from "@/components/ui/EmptyState";
 import { useToast } from "@/components/ui/Toast";
@@ -48,6 +49,9 @@ export default function ApplicationsClient() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
 
+  // Debounce the search query to avoid excessive API calls
+  const debouncedQ = useDebounce(q, 300);
+
   // Pagination
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
@@ -67,13 +71,13 @@ export default function ApplicationsClient() {
     const sp = new URLSearchParams();
     sp.set("page", String(page));
     sp.set("pageSize", String(pageSize));
-    if (q.trim()) sp.set("q", q.trim());
+    if (debouncedQ.trim()) sp.set("q", debouncedQ.trim());
     if (stage) sp.set("stage", stage);
     if (tags.trim()) sp.set("tags", tags.trim());
     if (from) sp.set("from", `${from}T00:00:00`);
     if (to) sp.set("to", `${to}T23:59:59`);
     return sp.toString();
-  }, [q, stage, tags, from, to, page, pageSize]);
+  }, [debouncedQ, stage, tags, from, to, page, pageSize]);
 
   const load = useCallback(async () => {
     setLoading(true);

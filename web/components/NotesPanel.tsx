@@ -1,12 +1,29 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ConfirmModal } from "@/components/ui/Modal";
+import EmptyState from "@/components/ui/EmptyState";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 type Note = {
   id: string;
   content: string;
   createdAt: string;
 };
+
+function NotesSkeleton() {
+  return (
+    <div className="space-y-2">
+      {[1, 2].map((i) => (
+        <div key={i} className="rounded-lg border border-zinc-200 dark:border-zinc-700 p-3">
+          <Skeleton className="h-3 w-24 mb-2" />
+          <Skeleton className="h-4 w-full mb-1" />
+          <Skeleton className="h-4 w-3/4" />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function NotesPanel({ applicationId }: { applicationId: string }) {
   const [items, setItems] = useState<Note[]>([]);
@@ -15,6 +32,9 @@ export default function NotesPanel({ applicationId }: { applicationId: string })
 
   const [draft, setDraft] = useState("");
   const [saving, setSaving] = useState(false);
+
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -60,12 +80,18 @@ export default function NotesPanel({ applicationId }: { applicationId: string })
     }
   }
 
-  async function deleteNote(id: string) {
-    if (!confirm("Delete this note?")) return;
-    const res = await fetch(`/api/notes?id=${encodeURIComponent(id)}`, { method: "DELETE" });
-    const data = await res.json();
-    if (!res.ok) setErr(data?.error?.message ?? "Delete failed");
-    else await load();
+  async function confirmDelete() {
+    if (!deleteId) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/notes?id=${encodeURIComponent(deleteId)}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) setErr(data?.error?.message ?? "Delete failed");
+      else await load();
+    } finally {
+      setDeleting(false);
+      setDeleteId(null);
+    }
   }
 
   return (
@@ -78,27 +104,52 @@ export default function NotesPanel({ applicationId }: { applicationId: string })
       <div className="space-y-2">
         <textarea
           className="input min-h-[90px]"
-          placeholder="Add a note…"
+          placeholder="Add a note..."
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && draft.trim()) {
+              e.preventDefault();
+              addNote();
+            }
+          }}
         />
-        <button className="btn btn-primary" onClick={addNote} disabled={saving || !draft.trim()}>
-          {saving ? "Adding…" : "Add note"}
-        </button>
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-zinc-500">Ctrl+Enter to save</span>
+          <button className="btn btn-primary" onClick={addNote} disabled={saving || !draft.trim()}>
+            {saving ? "Adding..." : "Add note"}
+          </button>
+        </div>
       </div>
 
-      {loading && <div className="text-sm text-zinc-600">Loading…</div>}
       {err && <div className="text-sm text-red-600">{err}</div>}
 
-      {!loading && !err && items.length === 0 && (
-        <div className="text-sm text-zinc-600">No notes yet.</div>
+      {loading ? (
+        <NotesSkeleton />
+      ) : items.length === 0 ? (
+        <EmptyState
+          icon="notes"
+          title="No notes yet"
+          description="Add notes to track important details about this application."
+        />
+      ) : (
+        <div className="space-y-2">
+          {items.map((n) => (
+            <NoteRow key={n.id} note={n} onDelete={(id) => setDeleteId(id)} onChanged={load} />
+          ))}
+        </div>
       )}
 
-      <div className="space-y-2">
-        {items.map((n) => (
-          <NoteRow key={n.id} note={n} onDelete={deleteNote} onChanged={load} />
-        ))}
-      </div>
+      <ConfirmModal
+        open={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={confirmDelete}
+        title="Delete note"
+        message="Are you sure you want to delete this note? This action cannot be undone."
+        confirmText="Delete"
+        variant="danger"
+        loading={deleting}
+      />
     </div>
   );
 }
@@ -109,7 +160,7 @@ function NoteRow({
   onChanged
 }: {
   note: Note;
-  onDelete: (id: string) => Promise<void>;
+  onDelete: (id: string) => void;
   onChanged: () => Promise<void>;
 }) {
   const [editing, setEditing] = useState(false);
@@ -147,7 +198,7 @@ function NoteRow({
   }
 
   return (
-    <div className="rounded-lg border border-zinc-200 p-3">
+    <div className="rounded-lg border border-zinc-200 dark:border-zinc-700 p-3">
       <div className="text-xs text-zinc-500">
         {new Date(note.createdAt).toLocaleString()}
       </div>
@@ -164,7 +215,7 @@ function NoteRow({
           {err && <div className="text-sm text-red-600">{err}</div>}
           <div className="flex gap-2">
             <button className="btn btn-primary" onClick={save} disabled={saving}>
-              {saving ? "Saving…" : "Save"}
+              {saving ? "Saving..." : "Save"}
             </button>
             <button
               className="btn"
@@ -184,7 +235,7 @@ function NoteRow({
       {!editing && (
         <div className="mt-2 flex gap-2">
           <button className="btn" onClick={() => setEditing(true)}>Edit</button>
-          <button className="btn" onClick={() => onDelete(note.id)}>Delete</button>
+          <button className="btn text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20" onClick={() => onDelete(note.id)}>Delete</button>
         </div>
       )}
     </div>
