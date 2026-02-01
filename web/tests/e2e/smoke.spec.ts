@@ -23,9 +23,9 @@ test("smoke: register, create application, add task", async ({ page }) => {
   await expect(page).toHaveURL(/\/applications\/new/);
 
   await page.getByLabel("Company").fill("Acme Inc");
-  await page.getByLabel("Role / Title").fill("Junior Dev");
-  await page.getByLabel("Tags (comma separated)").fill("remote, referral");
-  await page.getByRole("button", { name: "Create" }).click();
+  await page.getByLabel("Job Title").fill("Junior Dev");
+  await page.getByLabel("Tags").fill("remote, referral");
+  await page.getByRole("button", { name: "Create Application" }).click();
 
   await expect(page).toHaveURL(/\/applications/);
 

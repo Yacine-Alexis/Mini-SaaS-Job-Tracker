@@ -488,6 +488,7 @@ export default function ApplicationForm({ mode, id }: { mode: Mode; id?: string 
 // Helper Components
 type InputFieldProps = {
   label: string;
+  id?: string;
   value: string;
   onChange: (value: string) => void;
   onBlur?: () => void;
@@ -502,6 +503,7 @@ type InputFieldProps = {
 
 function InputField({
   label,
+  id,
   value,
   onChange,
   onBlur,
@@ -515,10 +517,11 @@ function InputField({
 }: InputFieldProps) {
   const hasError = !!error;
   const showValid = isValid && !hasError;
+  const inputId = id ?? label.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
   return (
     <div>
-      <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+      <label htmlFor={inputId} className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
         {label}
         {required && <span className="text-red-500 ml-0.5">*</span>}
       </label>
@@ -529,6 +532,7 @@ function InputField({
           </span>
         )}
         <input
+          id={inputId}
           type={type}
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -575,6 +579,7 @@ function InputField({
 
 type SelectFieldProps = {
   label: string;
+  id?: string;
   value: string;
   onChange: (value: string) => void;
   onBlur?: () => void;
@@ -582,12 +587,14 @@ type SelectFieldProps = {
   isValid?: boolean;
 };
 
-function SelectField({ label, value, onChange, onBlur, options, isValid }: SelectFieldProps) {
+function SelectField({ label, id, value, onChange, onBlur, options, isValid }: SelectFieldProps) {
+  const selectId = id ?? label.toLowerCase().replace(/[^a-z0-9]+/g, "-");
   return (
     <div>
-      <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">{label}</label>
+      <label htmlFor={selectId} className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">{label}</label>
       <div className="relative">
         <select
+          id={selectId}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onBlur={onBlur}
