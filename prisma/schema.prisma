@@ -83,6 +83,7 @@ model User {
   attachmentLinks AttachmentLink[]
   interviews      Interview[]
   documents       Document[]
+  labels          Label[]
   passwordResetTokens PasswordResetToken[]
   auditLogs       AuditLog[]
 
@@ -273,6 +274,23 @@ model Document {
   @@index([userId, isDefault])
 }
 
+// Custom labels with colors for organizing applications
+model Label {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Restrict)
+  
+  name      String    // Display name
+  color     String    // Hex color code (e.g., "#3b82f6")
+  
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([userId, name])
+  @@index([userId, deletedAt])
+}
+
 model PasswordResetToken {
   id        String   @id @default(cuid())
   userId    String
@@ -311,6 +329,9 @@ enum AuditAction {
   DOCUMENT_CREATED
   DOCUMENT_UPDATED
   DOCUMENT_DELETED
+  LABEL_CREATED
+  LABEL_UPDATED
+  LABEL_DELETED
   EXPORT_CSV
   BILLING_UPGRADED
   BILLING_DOWNGRADED
