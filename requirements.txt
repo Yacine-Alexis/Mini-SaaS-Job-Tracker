@@ -1,0 +1,23 @@
+# This is a Node.js/Next.js project - not Python.
+# Dependencies are managed via package.json files.
+#
+# To install dependencies:
+#   npm install              (in root directory)
+#   cd web && npm install    (in web directory)
+#
+# Main dependencies (from web/package.json):
+# - Next.js 14
+# - React 18
+# - Prisma (PostgreSQL ORM)
+# - NextAuth (Authentication)
+# - Stripe (Payments)
+# - Tailwind CSS (Styling)
+# - Zod (Validation)
+# - TypeScript
+#
+# For development:
+#   npm run dev              (start dev server)
+#   npm run build            (production build)
+#   npm run lint             (code linting)
+#   npm run typecheck        (TypeScript checking)
+#   npm run test:e2e         (Playwright tests)

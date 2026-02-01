@@ -7,12 +7,15 @@ import TasksPanel from "@/components/TasksPanel";
 import ApplicationQuickEdit from "@/components/ApplicationQuickEdit";
 import ContactsPanel from "@/components/ContactsPanel";
 import AttachmentLinksPanel from "@/components/AttachmentLinksPanel";
+import StageProgressIndicator from "@/components/StageProgressIndicator";
+import SalaryDisplay, { SalaryRangeBar } from "@/components/SalaryDisplay";
+import { ApplicationStage } from "@prisma/client";
 
 type AppItem = {
   id: string;
   company: string;
   title: string;
-  stage: any;
+  stage: ApplicationStage;
   location: string | null;
   url: string | null;
   source: string | null;
@@ -64,11 +67,21 @@ export default function ApplicationDetailsClient({ id }: { id: string }) {
             <Link className="underline" href="/applications">Applications</Link> / Details
           </div>
           <h1 className="text-xl font-semibold mt-1">{item.company} — {item.title}</h1>
-          <div className="mt-2 flex flex-wrap gap-2 text-sm text-zinc-700">
-            <span className="badge">{String(item.stage)}</span>
+
+          {/* Stage Progress Indicator */}
+          <div className="mt-3">
+            <StageProgressIndicator currentStage={item.stage} />
+          </div>
+
+          <div className="mt-3 flex flex-wrap gap-2 text-sm text-zinc-700 dark:text-zinc-300">
             {item.location && <span className="badge">📍 {item.location}</span>}
             {item.source && <span className="badge">Source: {item.source}</span>}
             {item.appliedDate && <span className="badge">Applied: {new Date(item.appliedDate).toISOString().slice(0,10)}</span>}
+            {(item.salaryMin || item.salaryMax) && (
+              <span className="badge">
+                💰 <SalaryDisplay min={item.salaryMin} max={item.salaryMax} />
+              </span>
+            )}
           </div>
 
           {item.url && (

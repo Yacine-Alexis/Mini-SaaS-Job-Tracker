@@ -97,7 +97,7 @@ export default function ApplicationsClient() {
           <select
             className="input"
             value={stage}
-            onChange={(e) => resetPageAnd(() => setStage(e.target.value as any))}
+            onChange={(e) => resetPageAnd(() => setStage(e.target.value as ApplicationStage | ""))}
           >
             <option value="">All stages</option>
             {Object.values(ApplicationStage).map((s) => (
@@ -161,7 +161,7 @@ export default function ApplicationsClient() {
           ) : (
             <a className="btn" href="/settings/billing" title="Upgrade to export CSV">Export (Pro)</a>
           )}
-          
+
 
         </div>
       </div>
@@ -171,10 +171,25 @@ export default function ApplicationsClient() {
 
       {!loading && !err && items.length === 0 && (
         <div className="card p-6">
-          <div className="font-semibold">No applications found</div>
-          <p className="mt-1 text-sm text-zinc-600">Try adjusting filters or create a new application.</p>
-          <Link className="btn btn-primary mt-4 inline-flex" href="/applications/new">Create one</Link>
+            <div className="font-semibold">No applications found</div>
+            <p className="mt-1 text-sm text-zinc-600">Try adjusting filters or create a new application.</p>
+            <div className="mt-4 flex flex-wrap gap-2">
+                <Link className="btn btn-primary" href="/applications/new">Create one</Link>
+                <Link className="btn" href="/applications/import">Import CSV</Link>
+                <button
+                className="btn"
+                onClick={async () => {
+                    const res = await fetch("/api/onboarding/sample-data", { method: "POST" });
+                    const data = await res.json().catch(() => null);
+                    if (!res.ok) alert(data?.error?.message ?? "Failed");
+                    else await load();
+                }}
+                >
+                Add sample data
+                </button>
+            </div>
         </div>
+
       )}
 
       {!loading && !err && items.length > 0 && (

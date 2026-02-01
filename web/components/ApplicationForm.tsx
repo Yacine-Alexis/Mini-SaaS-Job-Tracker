@@ -166,10 +166,10 @@ export default function ApplicationForm({ mode, id }: { mode: Mode; id?: string 
 
   function isFieldValid(key: keyof FormState): boolean {
     if (!touched[key]) return false;
-    
+
     const value = form[key];
     if (typeof value !== "string") return true;
-    
+
     switch (key) {
       case "company":
         return value.trim().length > 0 && value.trim().length <= 120;
@@ -195,7 +195,7 @@ export default function ApplicationForm({ mode, id }: { mode: Mode; id?: string 
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    
+
     // Mark all fields as touched
     const allTouched: TouchedFields = {};
     (Object.keys(form) as (keyof FormState)[]).forEach((k) => {
@@ -239,7 +239,7 @@ export default function ApplicationForm({ mode, id }: { mode: Mode; id?: string 
         }
       );
       const data = await res.json();
-      
+
       if (!res.ok) {
         // Parse server-side validation errors
         if (data?.error?.details?.fieldErrors) {
@@ -282,7 +282,7 @@ export default function ApplicationForm({ mode, id }: { mode: Mode; id?: string 
   }
 
   return (
-    <form className="rounded-xl border border-zinc-200 bg-white shadow-sm p-6 space-y-6" onSubmit={onSubmit}>
+    <form className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 shadow-sm p-6 space-y-6" onSubmit={onSubmit}>
       {errors.general && (
         <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 flex items-start gap-2">
           <svg className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -294,8 +294,8 @@ export default function ApplicationForm({ mode, id }: { mode: Mode; id?: string 
 
       {/* Required Fields */}
       <div>
-        <h3 className="text-sm font-semibold text-zinc-900 mb-4 flex items-center gap-2">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-900 text-white text-xs">1</span>
+        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4 flex items-center gap-2">
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs">1</span>
           Basic Information
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -324,8 +324,8 @@ export default function ApplicationForm({ mode, id }: { mode: Mode; id?: string 
 
       {/* Location & Source */}
       <div>
-        <h3 className="text-sm font-semibold text-zinc-900 mb-4 flex items-center gap-2">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-900 text-white text-xs">2</span>
+        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4 flex items-center gap-2">
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs">2</span>
           Location & Source
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -344,14 +344,14 @@ export default function ApplicationForm({ mode, id }: { mode: Mode; id?: string 
               placeholder="e.g., Remote, New York, NY"
             />
             {showLocationSuggestions && (
-              <div className="absolute z-10 mt-1 w-full rounded-lg border border-zinc-200 bg-white shadow-lg max-h-48 overflow-y-auto">
+              <div className="absolute z-10 mt-1 w-full rounded-lg border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-800 shadow-lg max-h-48 overflow-y-auto">
                 {LOCATION_SUGGESTIONS.filter(
                   (loc) => !form.location || loc.toLowerCase().includes(form.location.toLowerCase())
                 ).map((loc) => (
                   <button
                     key={loc}
                     type="button"
-                    className="w-full px-3 py-2 text-left text-sm hover:bg-zinc-50 focus:bg-zinc-100 focus:outline-none"
+                    className="w-full px-3 py-2 text-left text-sm text-zinc-900 dark:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-700 focus:bg-zinc-100 dark:focus:bg-zinc-700 focus:outline-none"
                     onMouseDown={() => {
                       set("location", loc);
                       setShowLocationSuggestions(false);
@@ -376,8 +376,8 @@ export default function ApplicationForm({ mode, id }: { mode: Mode; id?: string 
 
       {/* Job Details */}
       <div>
-        <h3 className="text-sm font-semibold text-zinc-900 mb-4 flex items-center gap-2">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-900 text-white text-xs">3</span>
+        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4 flex items-center gap-2">
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs">3</span>
           Job Details
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -419,10 +419,10 @@ export default function ApplicationForm({ mode, id }: { mode: Mode; id?: string 
 
       {/* Salary */}
       <div>
-        <h3 className="text-sm font-semibold text-zinc-900 mb-4 flex items-center gap-2">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-900 text-white text-xs">4</span>
+        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4 flex items-center gap-2">
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs">4</span>
           Salary Range
-          <span className="text-xs font-normal text-zinc-500">(Optional)</span>
+          <span className="text-xs font-normal text-zinc-500 dark:text-zinc-400">(Optional)</span>
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <InputField
@@ -518,7 +518,7 @@ function InputField({
 
   return (
     <div>
-      <label className="block text-sm font-medium text-zinc-700 mb-1">
+      <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
         {label}
         {required && <span className="text-red-500 ml-0.5">*</span>}
       </label>
@@ -536,13 +536,13 @@ function InputField({
           onFocus={onFocus}
           placeholder={placeholder}
           className={`
-            w-full rounded-lg border px-3 py-2.5 text-sm outline-none transition-all
+            w-full rounded-lg border px-3 py-2.5 text-sm outline-none transition-all text-zinc-900 dark:text-zinc-100
             ${prefix ? "pl-7" : ""}
             ${hasError
-              ? "border-red-300 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500/20"
+              ? "border-red-300 bg-red-50 dark:bg-red-900/20 dark:border-red-700 focus:border-red-500 focus:ring-2 focus:ring-red-500/20"
               : showValid
-              ? "border-green-300 bg-green-50/50 focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
-              : "border-zinc-300 bg-white focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20"
+              ? "border-green-300 bg-green-50/50 dark:bg-green-900/20 dark:border-green-700 focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+              : "border-zinc-300 bg-white dark:bg-zinc-800 dark:border-zinc-600 focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20"
             }
           `}
         />
@@ -585,17 +585,17 @@ type SelectFieldProps = {
 function SelectField({ label, value, onChange, onBlur, options, isValid }: SelectFieldProps) {
   return (
     <div>
-      <label className="block text-sm font-medium text-zinc-700 mb-1">{label}</label>
+      <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">{label}</label>
       <div className="relative">
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onBlur={onBlur}
           className={`
-            w-full rounded-lg border px-3 py-2.5 text-sm outline-none transition-all appearance-none bg-white pr-10
+            w-full rounded-lg border px-3 py-2.5 text-sm outline-none transition-all appearance-none pr-10 text-zinc-900 dark:text-zinc-100
             ${isValid
-              ? "border-green-300 bg-green-50/50 focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
-              : "border-zinc-300 focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20"
+              ? "border-green-300 bg-green-50/50 dark:bg-green-900/20 dark:border-green-700 focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+              : "border-zinc-300 bg-white dark:bg-zinc-800 dark:border-zinc-600 focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20"
             }
           `}
         >
