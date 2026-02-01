@@ -8,7 +8,9 @@ import { useDebounce } from "@/lib/hooks";
 import { ConfirmModal } from "@/components/ui/Modal";
 import EmptyState from "@/components/ui/EmptyState";
 import { useToast } from "@/components/ui/Toast";
+import { KanbanBoard } from "@/components/KanbanBoard";
 
+type ViewMode = "list" | "board";
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100] as const;
 const DEFAULT_PAGE_SIZE = 20;
 
@@ -43,6 +45,19 @@ export default function ApplicationsClient() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
 
+  // View mode
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    if (typeof window !== "undefined") {
+      return (localStorage.getItem("applicationsViewMode") as ViewMode) || "list";
+    }
+    return "list";
+  });
+
+  // Persist view mode
+  useEffect(() => {
+    localStorage.setItem("applicationsViewMode", viewMode);
+  }, [viewMode]);
+
   // Filters
   const [q, setQ] = useState("");
   const [stage, setStage] = useState<ApplicationStage | "">("");
@@ -70,8 +85,13 @@ export default function ApplicationsClient() {
 
   const queryString = useMemo(() => {
     const sp = new URLSearchParams();
-    sp.set("page", String(page));
-    sp.set("pageSize", String(pageSize));
+    // For board view, fetch all items (no pagination)
+    if (viewMode === "board") {
+      sp.set("pageSize", "500"); // Fetch all
+    } else {
+      sp.set("page", String(page));
+      sp.set("pageSize", String(pageSize));
+    }
     sp.set("sortBy", sortField);
     sp.set("sortDir", sortDir);
     if (debouncedQ.trim()) sp.set("q", debouncedQ.trim());
@@ -80,7 +100,7 @@ export default function ApplicationsClient() {
     if (from) sp.set("from", `${from}T00:00:00`);
     if (to) sp.set("to", `${to}T23:59:59`);
     return sp.toString();
-  }, [debouncedQ, stage, tags, from, to, page, pageSize, sortField, sortDir]);
+  }, [debouncedQ, stage, tags, from, to, page, pageSize, sortField, sortDir, viewMode]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -234,6 +254,16 @@ export default function ApplicationsClient() {
     await load();
   }
 
+  // Single application stage change (for Kanban)
+  const handleStageChange = useCallback(async (id: string, newStage: ApplicationStage) => {
+    const res = await fetch(`/api/applications/${id}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ stage: newStage }),
+    });
+    if (!res.ok) throw new Error("Failed to update stage");
+  }, []);
+
   const [plan, setPlan] = useState<string | null>(null);
   useEffect(() => {
     fetch("/api/me").then((r) => r.json()).then((d) => setPlan(d?.user?.plan ?? null)).catch(() => {});
@@ -274,15 +304,46 @@ export default function ApplicationsClient() {
             </span>
           </p>
         </div>
-        <Link
-          href="/applications/new"
-          className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-all"
-        >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          New
-        </Link>
+        <div className="flex items-center gap-2">
+          {/* View Toggle */}
+          <div className="hidden sm:flex items-center p-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg">
+            <button
+              onClick={() => setViewMode("list")}
+              className={`p-2 rounded-md transition-all ${
+                viewMode === "list"
+                  ? "bg-white dark:bg-zinc-700 shadow text-zinc-900 dark:text-zinc-100"
+                  : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
+              }`}
+              title="List view"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setViewMode("board")}
+              className={`p-2 rounded-md transition-all ${
+                viewMode === "board"
+                  ? "bg-white dark:bg-zinc-700 shadow text-zinc-900 dark:text-zinc-100"
+                  : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
+              }`}
+              title="Kanban board"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+              </svg>
+            </button>
+          </div>
+          <Link
+            href="/applications/new"
+            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-all"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            New
+          </Link>
+        </div>
       </div>
 
       {/* Filters Card */}
@@ -468,8 +529,17 @@ export default function ApplicationsClient() {
         </EmptyState>
       )}
 
-      {/* Data Table */}
-      {!loading && !err && items.length > 0 && (
+      {/* Kanban Board View */}
+      {!loading && !err && items.length > 0 && viewMode === "board" && (
+        <KanbanBoard
+          applications={items}
+          onStageChange={handleStageChange}
+          onRefresh={load}
+        />
+      )}
+
+      {/* Data Table View */}
+      {!loading && !err && items.length > 0 && viewMode === "list" && (
         <div className="card overflow-hidden">
           {/* Desktop Table */}
           <div className="hidden md:block overflow-x-auto">
@@ -657,8 +727,8 @@ export default function ApplicationsClient() {
         </div>
       )}
 
-      {/* Pagination */}
-      {!loading && !err && total > 0 && (
+      {/* Pagination (only for list view) */}
+      {!loading && !err && total > 0 && viewMode === "list" && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           {/* Results info */}
           <div className="text-sm text-zinc-600 dark:text-zinc-400">

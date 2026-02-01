@@ -136,7 +136,7 @@ test.describe("Applications", () => {
     // Look for stage selector and change it
     const stageSelect = page.locator('select, [role="combobox"]').first();
     if (await stageSelect.isVisible()) {
-      await stageSelect.selectOption({ label: /applied/i });
+      await stageSelect.selectOption({ label: "Applied" });
     }
   });
 
