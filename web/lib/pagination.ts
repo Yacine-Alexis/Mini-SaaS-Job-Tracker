@@ -7,6 +7,11 @@ export const paginationQuerySchema = z.object({
 
 export type Pagination = z.infer<typeof paginationQuerySchema>;
 
-export function toSkipTake(p: Pagination) {
+export interface SkipTake {
+  skip: number;
+  take: number;
+}
+
+export function toSkipTake(p: Pagination): SkipTake {
   return { skip: (p.page - 1) * p.pageSize, take: p.pageSize };
 }

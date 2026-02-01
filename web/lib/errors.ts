@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import type { ZodError } from "zod";
+import type { ZodError, typeToFlattenedError } from "zod";
 
 export type ApiErrorCode =
   | "UNAUTHORIZED"
@@ -15,18 +15,26 @@ export type ApiErrorCode =
   | "PLAN_REQUIRED"
   | "INVALID_CREDENTIALS";
 
+export interface ApiError {
+  error: {
+    code: ApiErrorCode;
+    message: string;
+    details?: unknown;
+  };
+}
+
 export function jsonError(
   status: number,
   code: ApiErrorCode,
   message: string,
   details?: unknown
-) {
+): NextResponse<ApiError> {
   return NextResponse.json(
     { error: { code, message, details } },
     { status }
   );
 }
 
-export function zodToDetails(err: ZodError) {
+export function zodToDetails<T>(err: ZodError<T>): typeToFlattenedError<T> {
   return err.flatten();
 }

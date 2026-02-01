@@ -6,7 +6,7 @@ export async function getUserPlan(userId: string): Promise<Plan> {
   return u?.plan ?? Plan.FREE;
 }
 
-export function isPro(plan: Plan) {
+export function isPro(plan: Plan): boolean {
   return plan === Plan.PRO;
 }
 
@@ -17,4 +17,4 @@ export function isPro(plan: Plan) {
  */
 export const LIMITS = {
   FREE_MAX_APPLICATIONS: 200
-};
+} as const;

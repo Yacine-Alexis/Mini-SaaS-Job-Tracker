@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ApplicationStage } from "@prisma/client";
+import { formatDateTime } from "@/lib/dateUtils";
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100] as const;
 const DEFAULT_PAGE_SIZE = 20;
@@ -40,8 +41,10 @@ export default function ApplicationsClient() {
     if (q.trim()) sp.set("q", q.trim());
     if (stage) sp.set("stage", stage);
     if (tags.trim()) sp.set("tags", tags.trim());
-    if (from) sp.set("from", new Date(from).toISOString());
-    if (to) sp.set("to", new Date(to).toISOString());
+    // Fix: Send dates as YYYY-MM-DD strings, let server handle timezone
+    // Using T00:00:00 ensures consistent local date interpretation
+    if (from) sp.set("from", `${from}T00:00:00`);
+    if (to) sp.set("to", `${to}T23:59:59`);
     return sp.toString();
   }, [q, stage, tags, from, to, page, pageSize]);
 
@@ -218,7 +221,7 @@ export default function ApplicationsClient() {
                   <td className="p-3">
                     <span className="badge">{it.stage}</span>
                   </td>
-                  <td className="p-3 text-zinc-600">{new Date(it.updatedAt).toLocaleString()}</td>
+                  <td className="p-3 text-zinc-600">{formatDateTime(it.updatedAt)}</td>
                   <td className="p-3">
                     <div className="flex gap-2 justify-end">
                       <Link className="btn" href={`/applications/${it.id}`}>View</Link>

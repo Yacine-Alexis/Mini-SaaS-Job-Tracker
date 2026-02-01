@@ -1,47 +1,12 @@
 import nodemailer from "nodemailer";
+import { passwordResetTemplate, welcomeTemplate, type EmailTemplate } from "./emailTemplates";
 
-/**
- * Escape HTML entities to prevent XSS in email templates
- */
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-/**
- * Escape URL for use in href attributes
- * Only allows http/https URLs to prevent javascript: protocol attacks
- */
-function escapeUrl(url: string): string {
-  try {
-    const parsed = new URL(url);
-    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-      return "#invalid-url";
-    }
-    return escapeHtml(url);
-  } catch {
-    return "#invalid-url";
-  }
-}
-
-function hasSmtp() {
+function hasSmtp(): boolean {
   return !!(process.env.SMTP_HOST && process.env.SMTP_PORT && process.env.SMTP_USER && process.env.SMTP_PASS);
 }
 
-export async function sendPasswordResetEmail(opts: { to: string; resetUrl: string }) {
-  const from = process.env.EMAIL_FROM || "no-reply@localhost";
-
-  // Dev fallback: log instead of sending
-  if (!hasSmtp()) {
-    console.log(`[DEV] Password reset link for ${opts.to}: ${opts.resetUrl}`);
-    return;
-  }
-
-  const transporter = nodemailer.createTransport({
+function createTransporter() {
+  return nodemailer.createTransport({
     host: process.env.SMTP_HOST!,
     port: Number(process.env.SMTP_PORT!),
     secure: process.env.SMTP_SECURE === "true",
@@ -50,20 +15,35 @@ export async function sendPasswordResetEmail(opts: { to: string; resetUrl: strin
       pass: process.env.SMTP_PASS!
     }
   });
+}
 
-  // Escape URL for safe HTML embedding
-  const safeUrl = escapeUrl(opts.resetUrl);
-  const displayUrl = escapeHtml(opts.resetUrl);
+async function sendEmail(to: string, template: EmailTemplate): Promise<void> {
+  const from = process.env.EMAIL_FROM || "no-reply@localhost";
 
+  // Dev fallback: log instead of sending
+  if (!hasSmtp()) {
+    console.log(`[DEV] Email to ${to}:`);
+    console.log(`  Subject: ${template.subject}`);
+    console.log(`  Text: ${template.text.slice(0, 100)}...`);
+    return;
+  }
+
+  const transporter = createTransporter();
   await transporter.sendMail({
     from,
-    to: opts.to,
-    subject: "Reset your password",
-    text: `Reset your password: ${opts.resetUrl}`,
-    html: `
-      <p>Reset your password:</p>
-      <p><a href="${safeUrl}">${displayUrl}</a></p>
-      <p>If you didn't request this, you can ignore this email.</p>
-    `
+    to,
+    subject: template.subject,
+    text: template.text,
+    html: template.html
   });
+}
+
+export async function sendPasswordResetEmail(opts: { to: string; resetUrl: string }): Promise<void> {
+  const template = passwordResetTemplate(opts.resetUrl);
+  await sendEmail(opts.to, template);
+}
+
+export async function sendWelcomeEmail(opts: { to: string }): Promise<void> {
+  const template = welcomeTemplate(opts.to);
+  await sendEmail(opts.to, template);
 }

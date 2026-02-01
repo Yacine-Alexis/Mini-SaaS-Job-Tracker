@@ -290,6 +290,54 @@ npm run test:unit
 
 ---
 
+## 💾 Database Backup & Recovery
+
+### Manual Backup
+
+```bash
+# Export database to SQL file
+pg_dump -h localhost -U postgres -d jobtracker > backup_$(date +%Y%m%d_%H%M%S).sql
+
+# For Docker-based PostgreSQL
+docker exec job-tracker-db pg_dump -U postgres jobtracker > backup.sql
+```
+
+### Automated Backups (Production)
+
+For production deployments, we recommend:
+
+1. **Managed Database Services** (Recommended)
+   - Vercel Postgres, Supabase, or Neon provide automatic daily backups
+   - Point-in-time recovery available on most providers
+
+2. **Cron-based Backups**
+   ```bash
+   # Add to crontab (runs daily at 2 AM)
+   0 2 * * * pg_dump -h $DB_HOST -U $DB_USER -d $DB_NAME | gzip > /backups/db_$(date +\%Y\%m\%d).sql.gz
+   ```
+
+3. **Cloud Storage Upload**
+   ```bash
+   # Upload to S3 after backup
+   aws s3 cp backup.sql.gz s3://your-bucket/backups/
+   ```
+
+### Restore from Backup
+
+```bash
+# Restore from SQL file
+psql -h localhost -U postgres -d jobtracker < backup.sql
+
+# For Docker-based PostgreSQL
+docker exec -i job-tracker-db psql -U postgres jobtracker < backup.sql
+```
+
+### CSV Export (User-Level Backup)
+
+Users can export their own data via the Pro plan CSV export feature at `/applications/export`.
+
+---
+
 ## 🚢 Deployment
 
 ### Deploy to Vercel (Recommended)
