@@ -11,6 +11,7 @@ import Avatar from "@/components/ui/Avatar";
 const mainNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: DashboardIcon },
   { href: "/applications", label: "Applications", icon: ApplicationsIcon },
+  { href: "/analytics", label: "Analytics", icon: ChartIcon },
   { href: "/applications/import", label: "Import", icon: ImportIcon },
 ];
 

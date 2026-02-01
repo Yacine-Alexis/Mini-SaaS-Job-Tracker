@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer";
-import { passwordResetTemplate, welcomeTemplate, type EmailTemplate } from "./emailTemplates";
+import { passwordResetTemplate, welcomeTemplate, followUpReminderTemplate, type EmailTemplate, type ReminderItem } from "./emailTemplates";
 
 function hasSmtp(): boolean {
   return !!(process.env.SMTP_HOST && process.env.SMTP_PORT && process.env.SMTP_USER && process.env.SMTP_PASS);
@@ -45,5 +45,10 @@ export async function sendPasswordResetEmail(opts: { to: string; resetUrl: strin
 
 export async function sendWelcomeEmail(opts: { to: string }): Promise<void> {
   const template = welcomeTemplate(opts.to);
+  await sendEmail(opts.to, template);
+}
+
+export async function sendFollowUpReminderEmail(opts: { to: string; items: ReminderItem[]; dashboardUrl: string }): Promise<void> {
+  const template = followUpReminderTemplate(opts.items, opts.dashboardUrl);
   await sendEmail(opts.to, template);
 }
