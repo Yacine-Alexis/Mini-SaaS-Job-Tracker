@@ -14,8 +14,13 @@ export async function GET(_req: NextRequest) {
   const { userId, error } = await requireUserOr401();
   if (error) return error;
 
+  const now = new Date();
+  const thisWeek = startOfISOWeek(now);
+  const lastWeek = new Date(thisWeek);
+  lastWeek.setUTCDate(lastWeek.getUTCDate() - 7);
+
   // Use database aggregation instead of loading all records into memory
-  const [stageCounts, total, weeklyData] = await Promise.all([
+  const [stageCounts, total, totalLastWeek, weeklyData, recentDates, topTags] = await Promise.all([
     // Count by stage using groupBy
     prisma.jobApplication.groupBy({
       by: ["stage"],
@@ -26,10 +31,16 @@ export async function GET(_req: NextRequest) {
     prisma.jobApplication.count({
       where: { userId, deletedAt: null }
     }),
+    // Total count last week (for trend comparison)
+    prisma.jobApplication.count({
+      where: { 
+        userId, 
+        deletedAt: null,
+        createdAt: { lt: thisWeek }
+      }
+    }),
     // Get weekly counts for last 8 weeks using raw aggregation
     (async () => {
-      const now = new Date();
-      const thisWeek = startOfISOWeek(now);
       const weeks: { weekStart: string; count: number }[] = [];
 
       // Get counts for each week in parallel
@@ -55,6 +66,35 @@ export async function GET(_req: NextRequest) {
       }
 
       return Promise.all(weekPromises);
+    })(),
+    // Get all application creation dates for heatmap (last 90 days)
+    prisma.jobApplication.findMany({
+      where: {
+        userId,
+        deletedAt: null,
+        createdAt: {
+          gte: new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
+        }
+      },
+      select: { createdAt: true }
+    }),
+    // Get top tags
+    (async () => {
+      const apps = await prisma.jobApplication.findMany({
+        where: { userId, deletedAt: null },
+        select: { tags: true }
+      });
+      const tagCounts = new Map<string, number>();
+      for (const app of apps) {
+        for (const tag of app.tags) {
+          const normalized = tag.toLowerCase().trim();
+          tagCounts.set(normalized, (tagCounts.get(normalized) || 0) + 1);
+        }
+      }
+      return Array.from(tagCounts.entries())
+        .map(([tag, count]) => ({ tag, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10);
     })()
   ]);
 
@@ -67,6 +107,9 @@ export async function GET(_req: NextRequest) {
   return NextResponse.json({
     stageCounts: stageCountsObj,
     weeklyApplications: weeklyData,
-    total
+    total,
+    totalLastWeek,
+    activityDates: recentDates.map(d => d.createdAt.toISOString()),
+    topTags
   });
 }
