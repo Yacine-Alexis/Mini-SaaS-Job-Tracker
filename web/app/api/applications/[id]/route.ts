@@ -60,10 +60,31 @@ export async function DELETE(_req: NextRequest, ctx: RouteContext) {
   });
   if (!existing) return jsonError(404, "NOT_FOUND", "Application not found");
 
-  await prisma.jobApplication.update({
-    where: { id },
-    data: { deletedAt: new Date() }
-  });
+  const now = new Date();
+
+  // Cascade soft-delete: application and all related items in a transaction
+  await prisma.$transaction([
+    prisma.jobApplication.update({
+      where: { id },
+      data: { deletedAt: now }
+    }),
+    prisma.note.updateMany({
+      where: { applicationId: id, deletedAt: null },
+      data: { deletedAt: now }
+    }),
+    prisma.task.updateMany({
+      where: { applicationId: id, deletedAt: null },
+      data: { deletedAt: now }
+    }),
+    prisma.contact.updateMany({
+      where: { applicationId: id, deletedAt: null },
+      data: { deletedAt: now }
+    }),
+    prisma.attachmentLink.updateMany({
+      where: { applicationId: id, deletedAt: null },
+      data: { deletedAt: now }
+    })
+  ]);
 
   await audit(_req, userId, AuditAction.APPLICATION_DELETED, { entity: "JobApplication", entityId: id });
 

@@ -3,10 +3,12 @@ import { prisma } from "@/lib/db";
 import { jsonError, zodToDetails } from "@/lib/errors";
 import { requireUserOr401 } from "@/lib/auth";
 import { applicationCreateSchema, applicationListQuerySchema } from "@/lib/validators/applications";
+import { buildApplicationFilter } from "@/lib/validators/shared";
 import { paginationQuerySchema, toSkipTake } from "@/lib/pagination";
 import { getUserPlan, isPro, LIMITS } from "@/lib/plan";
 import { AuditAction } from "@prisma/client";
 import { audit } from "@/lib/audit";
+import { enforceRateLimitAsync } from "@/lib/rateLimit";
 
 export async function GET(req: NextRequest) {
   const { userId, error } = await requireUserOr401();
@@ -35,31 +37,15 @@ export async function GET(req: NextRequest) {
   const tagList =
     tags?.split(",").map((t) => t.trim()).filter(Boolean) ?? [];
 
-  const where: any = {
+  // Use type-safe filter builder
+  const where = buildApplicationFilter({
     userId,
-    deletedAt: null
-  };
-
-  if (stage) where.stage = stage;
-
-  if (q) {
-    where.OR = [
-      { company: { contains: q, mode: "insensitive" } },
-      { title: { contains: q, mode: "insensitive" } },
-      { location: { contains: q, mode: "insensitive" } }
-    ];
-  }
-
-  if (tagList.length) {
-    // match ANY of the tags
-    where.tags = { hasSome: tagList };
-  }
-
-  if (from || to) {
-    where.appliedDate = {};
-    if (from) where.appliedDate.gte = new Date(from);
-    if (to) where.appliedDate.lte = new Date(to);
-  }
+    stage,
+    q,
+    tags: tagList.length > 0 ? tagList : undefined,
+    from,
+    to
+  });
 
   const [total, items] = await Promise.all([
     prisma.jobApplication.count({ where }),
@@ -80,6 +66,10 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  // Rate limit: 60 creations per minute per IP
+  const rl = await enforceRateLimitAsync(req, "applications:create", 60, 60_000);
+  if (rl) return rl;
+
   const { userId, error } = await requireUserOr401();
   if (error) return error;
 

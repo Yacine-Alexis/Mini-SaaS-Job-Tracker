@@ -3,8 +3,13 @@ import { getStripe } from "@/lib/stripe";
 import { requireUserOr401 } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { jsonError } from "@/lib/errors";
+import { enforceRateLimitAsync } from "@/lib/rateLimit";
 
-export async function POST(_req: NextRequest) {
+export async function POST(req: NextRequest) {
+  // Rate limit: 5 checkout attempts per minute per IP
+  const rl = await enforceRateLimitAsync(req, "billing:checkout", 5, 60_000);
+  if (rl) return rl;
+
   const { userId, error } = await requireUserOr401();
   if (error) return error;
 

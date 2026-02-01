@@ -3,6 +3,7 @@ import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 import { jsonError, zodToDetails } from "@/lib/errors";
+import { enforceRateLimitAsync } from "@/lib/rateLimit";
 
 const bodySchema = z.object({
   email: z.string().email().max(255),
@@ -10,8 +11,12 @@ const bodySchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  // Rate limit: 10 registrations per IP per hour
+  const rl = await enforceRateLimitAsync(req, "auth:register", 10, 3600_000);
+  if (rl) return rl;
+
   try {
-    const raw = await req.json();
+    const raw = await req.json().catch(() => null);
     const parsed = bodySchema.safeParse(raw);
     if (!parsed.success) {
       return jsonError(400, "VALIDATION_ERROR", "Invalid input", zodToDetails(parsed.error));

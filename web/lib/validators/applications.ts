@@ -24,10 +24,20 @@ export const applicationUpdateSchema = applicationBaseSchema.partial().refine((v
   return true;
 }, { message: "salaryMin must be <= salaryMax", path: ["salaryMin"] });
 
+// Sanitize search query - remove SQL wildcards and potentially dangerous characters
+// Prisma uses parameterized queries but this adds defense in depth
+function sanitizeSearchQuery(q: string): string {
+  // Remove or escape characters that could cause issues
+  return q
+    .replace(/[%_]/g, "\\$&")     // Escape SQL LIKE wildcards
+    .replace(/[\x00-\x1F\x7F]/g, "") // Remove control characters
+    .trim();
+}
+
 export const applicationListQuerySchema = z.object({
   stage: z.nativeEnum(ApplicationStage).optional(),
-  q: z.string().max(200).optional(),
-  tags: z.string().optional(), // comma-separated
+  q: z.string().max(200).transform(sanitizeSearchQuery).optional(),
+  tags: z.string().max(500).optional(), // comma-separated, limit length
   from: z.string().datetime().optional(), // appliedDate from
   to: z.string().datetime().optional() // appliedDate to
 });

@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { requireUserOr401 } from "@/lib/auth";
 import { jsonError, zodToDetails } from "@/lib/errors";
 import { z } from "zod";
-import { enforceRateLimit } from "@/lib/rateLimit";
+import { enforceRateLimitAsync } from "@/lib/rateLimit";
 import { audit } from "@/lib/audit";
 import { AuditAction } from "@prisma/client";
 
@@ -14,7 +14,7 @@ const schema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  const rl = enforceRateLimit(req, "account:change-password", 5, 60_000);
+  const rl = await enforceRateLimitAsync(req, "account:change-password", 5, 60_000);
   if (rl) return rl;
 
   const { userId, error } = await requireUserOr401();

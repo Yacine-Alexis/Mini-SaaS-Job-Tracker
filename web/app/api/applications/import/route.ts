@@ -6,8 +6,13 @@ import { importPayloadSchema } from "@/lib/validators/import";
 import { getUserPlan, isPro, LIMITS } from "@/lib/plan";
 import { AuditAction } from "@prisma/client";
 import { audit } from "@/lib/audit";
+import { enforceRateLimitAsync } from "@/lib/rateLimit";
 
 export async function POST(req: NextRequest) {
+  // Rate limit: 5 imports per minute per IP
+  const rl = await enforceRateLimitAsync(req, "applications:import", 5, 60_000);
+  if (rl) return rl;
+
   const { userId, error } = await requireUserOr401();
   if (error) return error;
 

@@ -14,36 +14,59 @@ export async function GET(_req: NextRequest) {
   const { userId, error } = await requireUserOr401();
   if (error) return error;
 
-  const apps = await prisma.jobApplication.findMany({
-    where: { userId, deletedAt: null },
-    select: { stage: true, createdAt: true }
-  });
+  // Use database aggregation instead of loading all records into memory
+  const [stageCounts, total, weeklyData] = await Promise.all([
+    // Count by stage using groupBy
+    prisma.jobApplication.groupBy({
+      by: ["stage"],
+      where: { userId, deletedAt: null },
+      _count: { stage: true }
+    }),
+    // Total count
+    prisma.jobApplication.count({
+      where: { userId, deletedAt: null }
+    }),
+    // Get weekly counts for last 8 weeks using raw aggregation
+    (async () => {
+      const now = new Date();
+      const thisWeek = startOfISOWeek(now);
+      const weeks: { weekStart: string; count: number }[] = [];
 
-  const stageCounts: Record<string, number> = {};
-  for (const a of apps) stageCounts[a.stage] = (stageCounts[a.stage] ?? 0) + 1;
+      // Get counts for each week in parallel
+      const weekPromises = [];
+      for (let i = 7; i >= 0; i--) {
+        const ws = new Date(thisWeek);
+        ws.setUTCDate(ws.getUTCDate() - i * 7);
+        const we = new Date(ws);
+        we.setUTCDate(we.getUTCDate() + 7);
 
-  // last 8 weeks buckets
-  const now = new Date();
-  const thisWeek = startOfISOWeek(now);
-  const weeks: { weekStart: string; count: number }[] = [];
+        weekPromises.push(
+          prisma.jobApplication.count({
+            where: {
+              userId,
+              deletedAt: null,
+              createdAt: { gte: ws, lt: we }
+            }
+          }).then(count => ({
+            weekStart: ws.toISOString().slice(0, 10),
+            count
+          }))
+        );
+      }
 
-  for (let i = 7; i >= 0; i--) {
-    const ws = new Date(thisWeek);
-    ws.setUTCDate(ws.getUTCDate() - i * 7);
-    const we = new Date(ws);
-    we.setUTCDate(we.getUTCDate() + 7);
+      return Promise.all(weekPromises);
+    })()
+  ]);
 
-    const count = apps.filter((a) => a.createdAt >= ws && a.createdAt < we).length;
-
-    weeks.push({
-      weekStart: ws.toISOString().slice(0, 10),
-      count
-    });
+  // Transform stageCounts from array to object
+  const stageCountsObj: Record<string, number> = {};
+  for (const item of stageCounts) {
+    stageCountsObj[item.stage] = item._count.stage;
   }
 
   return NextResponse.json({
-    stageCounts,
-    weeklyApplications: weeks,
-    total: apps.length
+    stageCounts: stageCountsObj,
+    weeklyApplications: weeklyData,
+    total
   });
 }

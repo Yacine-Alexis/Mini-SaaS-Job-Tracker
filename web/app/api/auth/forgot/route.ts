@@ -4,14 +4,14 @@ import { prisma } from "@/lib/db";
 import { zodToDetails, jsonError } from "@/lib/errors";
 import { forgotPasswordSchema } from "@/lib/validators/passwordReset";
 import { sendPasswordResetEmail } from "@/lib/email";
-import { enforceRateLimit } from "@/lib/rateLimit";
+import { enforceRateLimitAsync } from "@/lib/rateLimit";
 
 function sha256(s: string) {
   return crypto.createHash("sha256").update(s).digest("hex");
 }
 
 export async function POST(req: NextRequest) {
-  const rl = enforceRateLimit(req, "auth:forgot", 5, 60_000);
+  const rl = await enforceRateLimitAsync(req, "auth:forgot", 5, 60_000);
   if (rl) return rl;
 
   const raw = await req.json().catch(() => null);
@@ -21,7 +21,8 @@ export async function POST(req: NextRequest) {
   const email = parsed.data.email.toLowerCase();
 
   // Always respond ok (no enumeration)
-  const user = await prisma.user.findUnique({ where: { email } }).catch(() => null);
+  // IMPORTANT: Check deletedAt to prevent sending reset emails to soft-deleted users
+  const user = await prisma.user.findFirst({ where: { email, deletedAt: null } }).catch(() => null);
   if (!user) return NextResponse.json({ ok: true });
 
   // Token + hashed storage

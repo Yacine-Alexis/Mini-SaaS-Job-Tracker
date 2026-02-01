@@ -1,5 +1,33 @@
 import nodemailer from "nodemailer";
 
+/**
+ * Escape HTML entities to prevent XSS in email templates
+ */
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+/**
+ * Escape URL for use in href attributes
+ * Only allows http/https URLs to prevent javascript: protocol attacks
+ */
+function escapeUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      return "#invalid-url";
+    }
+    return escapeHtml(url);
+  } catch {
+    return "#invalid-url";
+  }
+}
+
 function hasSmtp() {
   return !!(process.env.SMTP_HOST && process.env.SMTP_PORT && process.env.SMTP_USER && process.env.SMTP_PASS);
 }
@@ -23,6 +51,10 @@ export async function sendPasswordResetEmail(opts: { to: string; resetUrl: strin
     }
   });
 
+  // Escape URL for safe HTML embedding
+  const safeUrl = escapeUrl(opts.resetUrl);
+  const displayUrl = escapeHtml(opts.resetUrl);
+
   await transporter.sendMail({
     from,
     to: opts.to,
@@ -30,8 +62,8 @@ export async function sendPasswordResetEmail(opts: { to: string; resetUrl: strin
     text: `Reset your password: ${opts.resetUrl}`,
     html: `
       <p>Reset your password:</p>
-      <p><a href="${opts.resetUrl}">${opts.resetUrl}</a></p>
-      <p>If you didn’t request this, you can ignore this email.</p>
+      <p><a href="${safeUrl}">${displayUrl}</a></p>
+      <p>If you didn't request this, you can ignore this email.</p>
     `
   });
 }

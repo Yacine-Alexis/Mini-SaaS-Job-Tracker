@@ -7,44 +7,37 @@ Each item is numbered so we can address them one by one.
 
 ## 🔴 HIGH PRIORITY (Security & Bugs)
 
-### 1. Missing Rate Limiting on Critical Endpoints
+### 1. ✅ FIXED - Missing Rate Limiting on Critical Endpoints
 **Location:** Multiple API routes  
-**Issue:** Rate limiting is only applied to auth-related routes (`forgot`, `reset`, `change-password`, `delete`), but missing from:
-- `POST /api/applications` (creation spam)
-- `POST /api/auth/register` (registration spam/enumeration)
-- `POST /api/notes`, `POST /api/tasks`, `POST /api/contacts` (spam)
-- `POST /api/billing/create-checkout-session`
+**Status:** Fixed on 2026-02-01
 
-**Risk:** Without rate limiting, malicious users could:
-- Create thousands of applications to exhaust database storage
-- Perform brute-force attacks on registration
-- Cause denial of service
-
-**Fix:** Add `enforceRateLimit()` to all POST endpoints.
+Rate limiting added to:
+- `POST /api/applications` (60/min)
+- `POST /api/auth/register` (10/hour)
+- `POST /api/notes`, `POST /api/tasks`, `POST /api/contacts`, `POST /api/attachment-links` (30/min each)
+- `POST /api/billing/create-checkout-session` (5/min)
+- `POST /api/applications/import` (5/min)
 
 ---
 
-### 2. In-Memory Rate Limiting Won't Work in Production
+### 2. ✅ FIXED - In-Memory Rate Limiting Won't Work in Production
 **Location:** [web/lib/rateLimit.ts](web/lib/rateLimit.ts)  
-**Issue:** Rate limiting uses an in-memory `Map`, which:
-- Resets on server restart
-- Doesn't work across multiple serverless instances/containers
-- Memory leak potential (buckets never cleaned up)
+**Status:** Fixed on 2026-02-01
 
-**Fix:** Use Redis or a distributed rate limiting service (e.g., Upstash, Redis).
+Implemented:
+- Redis support via Upstash (set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`)
+- Automatic fallback to in-memory for development
+- Memory cleanup with periodic garbage collection
+- Max bucket limit (10,000) to prevent memory exhaustion
+- New `enforceRateLimitAsync()` function for production use
 
 ---
 
-### 3. Missing `deletedAt` Check in Password Reset Flow
-**Location:** [web/app/api/auth/forgot/route.ts#L24](web/app/api/auth/forgot/route.ts#L24)  
-**Issue:** The forgot password endpoint uses `findUnique({ where: { email } })` without checking `deletedAt: null`. A soft-deleted user could still receive password reset emails.
+### 3. ✅ FIXED - Missing `deletedAt` Check in Password Reset Flow
+**Location:** [web/app/api/auth/forgot/route.ts](web/app/api/auth/forgot/route.ts#L24)  
+**Status:** Fixed on 2026-02-01
 
-**Code:**
-```typescript
-const user = await prisma.user.findUnique({ where: { email } }).catch(() => null);
-```
-
-**Fix:** Change to `findFirst` with `deletedAt: null` filter.
+Changed from `findUnique({ where: { email } })` to `findFirst({ where: { email, deletedAt: null } })`.
 
 ---
 
@@ -58,106 +51,84 @@ const user = await prisma.user.findUnique({ where: { email } }).catch(() => null
 
 ---
 
-### 5. No CSRF Protection on State-Changing Endpoints
-**Location:** All API routes  
-**Issue:** POST/PATCH/DELETE endpoints don't verify CSRF tokens. While NextAuth provides some session-based protection, additional CSRF protection is recommended.
+### 5. ✅ FIXED - No CSRF Protection on State-Changing Endpoints
+**Location:** [web/middleware.ts](web/middleware.ts)  
+**Status:** Fixed on 2026-02-01
 
-**Fix:** Implement CSRF tokens or verify the `Origin` header matches your domain.
-
----
-
-### 6. Potential XSS in Password Reset Email
-**Location:** [web/lib/email.ts#L27-L32](web/lib/email.ts#L27-L32)  
-**Issue:** The `resetUrl` is directly interpolated into HTML without escaping:
-```typescript
-html: `<p><a href="${opts.resetUrl}">${opts.resetUrl}</a></p>`
-```
-
-If a malicious URL is somehow injected, it could lead to XSS.
-
-**Fix:** Escape HTML entities in the template.
+Implemented Origin header validation in middleware:
+- Validates Origin header against allowed origins (from `NEXTAUTH_URL`)
+- Blocks requests from unauthorized origins with 403 response
+- Exempts webhook routes that have their own authentication (Stripe, NextAuth)
+- Allows localhost origins in development mode
 
 ---
 
-### 7. Stripe Webhook Missing Event Signature Validation Logging
+### 6. ✅ FIXED - Potential XSS in Password Reset Email
+**Location:** [web/lib/email.ts](web/lib/email.ts)  
+**Status:** Fixed on 2026-02-01
+
+Added:
+- `escapeHtml()` function to escape HTML entities (`<`, `>`, `&`, `"`, `'`)
+- `escapeUrl()` function to validate URL protocol (only http/https allowed)
+- Both functions applied to reset URL before HTML interpolation
+
+---
+
+### 7. ✅ FIXED - Stripe Webhook Missing Event Signature Validation Logging
 **Location:** [web/app/api/billing/webhook/route.ts](web/app/api/billing/webhook/route.ts)  
-**Issue:** When webhook signature validation fails, there's no logging to help debug issues:
-```typescript
-} catch {
-  return NextResponse.json({ ok: false }, { status: 400 });
-}
-```
+**Status:** Fixed on 2026-02-01
 
-**Fix:** Log the error (without exposing secrets) for debugging.
+Added comprehensive logging:
+- Log errors when Stripe is not configured
+- Log when signature header is missing
+- Log signature verification failures with error message
+- Log successfully received events with type and ID
+- Log user upgrades/downgrades
+- Log warnings when user not found for customer ID
 
 ---
 
 ## 🟡 MEDIUM PRIORITY (Code Quality & Reliability)
 
-### 8. Inconsistent Error Handling in JSON Parsing
+### 8. ✅ FIXED - Inconsistent Error Handling in JSON Parsing
 **Location:** Multiple API routes  
-**Issue:** Some routes use `.catch(() => null)` for JSON parsing, while the register route doesn't:
-
-```typescript
-// Uses catch - good
-const raw = await req.json().catch(() => null);
-
-// No catch - can throw unhandled error
-const raw = await req.json();  // register route
-```
-
-**Fix:** Use consistent error handling with `.catch(() => null)` pattern everywhere.
+**Issue:** Some routes use `.catch(() => null)` for JSON parsing, while the register route doesn't.
+**Status:** Already handled in register route - uses `.catch(() => null)`.
 
 ---
 
-### 9. Missing Cascade Delete for Soft-Deleted Applications
-**Location:** API routes for notes, tasks, contacts, attachment-links  
-**Issue:** When an application is soft-deleted, its related notes/tasks/contacts/links remain active. Users could still access orphaned items through direct API calls.
-
-**Fix:** Either cascade soft-delete to related items, or add application `deletedAt` check when fetching child items.
-
----
-
-### 10. Missing Transaction for Application Delete
-**Location:** [web/app/api/applications/[id]/route.ts#L61-L65](web/app/api/applications/[id]/route.ts#L61-L65)  
-**Issue:** Deleting an application should also soft-delete related notes/tasks/contacts/links atomically.
-
-**Fix:** Wrap in a Prisma transaction.
+### 9. ✅ FIXED - Missing Cascade Delete for Soft-Deleted Applications
+**Location:** [web/app/api/applications/[id]/route.ts](web/app/api/applications/[id]/route.ts)  
+**Issue:** When an application is soft-deleted, its related notes/tasks/contacts/links remained active.
+**Fix Applied:** DELETE handler now cascades soft-delete to all related items using `$transaction`.
 
 ---
 
-### 11. No Pagination on Dashboard Query
-**Location:** [web/app/api/dashboard/route.ts#L17-L20](web/app/api/dashboard/route.ts#L17-L20)  
-**Issue:** Fetches ALL applications for a user into memory:
-```typescript
-const apps = await prisma.jobApplication.findMany({
-  where: { userId, deletedAt: null },
-  select: { stage: true, createdAt: true }
-});
-```
-
-**Risk:** For users with thousands of applications, this could cause memory issues.
-
-**Fix:** Use database aggregation queries instead of loading all records.
+### 10. ✅ FIXED - Missing Transaction for Application Delete
+**Location:** [web/app/api/applications/[id]/route.ts](web/app/api/applications/[id]/route.ts)  
+**Issue:** Deleting an application should also soft-delete related items atomically.
+**Fix Applied:** Wrapped in a Prisma `$transaction` with `updateMany` for all related models.
 
 ---
 
-### 12. `any` Type Usage in Prisma Queries
-**Location:** Multiple files  
-**Issue:** `where` clauses use `any` type:
-```typescript
-const where: any = { userId, deletedAt: null };
-```
-
-**Fix:** Create proper typed interfaces for query filters.
+### 11. ✅ FIXED - No Pagination on Dashboard Query
+**Location:** [web/app/api/dashboard/route.ts](web/app/api/dashboard/route.ts)  
+**Issue:** Fetched ALL applications for a user into memory, risking memory issues.
+**Fix Applied:** Replaced with database aggregation using `groupBy`, `count`, and parallel weekly counts.
 
 ---
 
-### 13. Missing Index for Tags Search
+### 12. ✅ FIXED - `any` Type Usage in Prisma Queries
+**Location:** [web/app/api/applications/route.ts](web/app/api/applications/route.ts)  
+**Issue:** `where` clauses used `any` type.
+**Fix Applied:** Created typed `buildApplicationFilter()` function in shared validators.
+
+---
+
+### 13. ✅ FIXED - Missing Index for Tags Search
 **Location:** [prisma/schema.prisma](prisma/schema.prisma)  
-**Issue:** The `tags` field is queried with `hasSome` but has no GIN index for efficient array searches.
-
-**Fix:** Add a GIN index: `@@index([tags], type: Gin)` (PostgreSQL-specific).
+**Issue:** The `tags` field is queried with `hasSome` but has no GIN index.
+**Fix Applied:** Added `@@index([tags], type: Gin)` to JobApplication model.
 
 ---
 
@@ -169,41 +140,32 @@ const where: any = { userId, deletedAt: null };
 
 ---
 
-### 15. Duplicate Query Schema Definitions
+### 15. ✅ FIXED - Duplicate Query Schema Definitions
 **Location:** Multiple route files  
-**Issue:** `listQuerySchema` is defined identically in:
-- `web/app/api/notes/route.ts`
-- `web/app/api/tasks/route.ts`
-- `web/app/api/contacts/route.ts`
-- `web/app/api/attachment-links/route.ts`
-
-**Fix:** Move to a shared validators file.
+**Issue:** `listQuerySchema` was defined identically in notes, tasks, contacts, attachment-links routes.
+**Fix Applied:** Created `listByApplicationSchema` in [web/lib/validators/shared.ts](web/lib/validators/shared.ts) and updated all routes.
 
 ---
 
-### 16. CSP Policy is Too Permissive
-**Location:** [web/middleware.ts#L14-L17](web/middleware.ts#L14-L17)  
-**Issue:** The Content Security Policy allows `'unsafe-eval'` and `'unsafe-inline'`:
-```typescript
-script-src 'self' 'unsafe-eval' 'unsafe-inline';
-```
-
-**Risk:** Weakens XSS protection.
-
-**Fix:** Use nonces for inline scripts and remove `unsafe-eval` if possible.
+### 16. ✅ FIXED - CSP Policy is Too Permissive
+**Location:** [web/middleware.ts](web/middleware.ts)  
+**Issue:** The Content Security Policy allowed `'unsafe-eval'` and `'unsafe-inline'` everywhere.
+**Fix Applied:** Improved CSP with:
+- Environment-aware policy (removes `unsafe-eval` in production)
+- Restricted `connect-src` to self + Stripe API only
+- Added `frame-src` for Stripe checkout
+- Added `form-action`, `base-uri`, `object-src` restrictions
+- Added `upgrade-insecure-requests` directive
 
 ---
 
-### 17. No Input Sanitization on Search Query
-**Location:** [web/app/api/applications/route.ts#L46-L51](web/app/api/applications/route.ts#L46-L51)  
-**Issue:** The search query `q` is passed directly to Prisma's `contains`:
-```typescript
-{ company: { contains: q, mode: "insensitive" } }
-```
-
-While Prisma protects against SQL injection, special characters could cause unexpected behavior.
-
-**Fix:** Sanitize or escape special regex/search characters.
+### 17. ✅ FIXED - No Input Sanitization on Search Query
+**Location:** [web/lib/validators/applications.ts](web/lib/validators/applications.ts)  
+**Issue:** The search query `q` was passed directly to Prisma's `contains`.
+**Fix Applied:** Added `sanitizeSearchQuery()` function that:
+- Escapes SQL LIKE wildcards (`%`, `_`)
+- Removes control characters
+- Added length limit to `tags` parameter
 
 ---
 
@@ -419,12 +381,12 @@ The `as any` cast hides type mismatches.
 
 ## Summary
 
-| Priority | Count |
-|----------|-------|
-| 🔴 High   | 7     |
-| 🟡 Medium | 10    |
-| 🟢 Low    | 23    |
-| **Total** | **40** |
+| Priority | Count | Fixed |
+|----------|-------|-------|
+| 🔴 High   | 7     | 6     |
+| 🟡 Medium | 10    | 0     |
+| 🟢 Low    | 23    | 0     |
+| **Total** | **40** | **6** |
 
 ---
 

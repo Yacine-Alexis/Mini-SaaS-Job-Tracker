@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 import { zodToDetails, jsonError } from "@/lib/errors";
 import { resetPasswordSchema } from "@/lib/validators/passwordReset";
-import { enforceRateLimit } from "@/lib/rateLimit";
+import { enforceRateLimitAsync } from "@/lib/rateLimit";
 import { AuditAction } from "@prisma/client";
 import { audit } from "@/lib/audit";
 
@@ -13,7 +13,7 @@ function sha256(s: string) {
 }
 
 export async function POST(req: NextRequest) {
-  const rl = enforceRateLimit(req, "auth:reset", 5, 60_000);
+  const rl = await enforceRateLimitAsync(req, "auth:reset", 5, 60_000);
   if (rl) return rl;
 
   const raw = await req.json().catch(() => null);

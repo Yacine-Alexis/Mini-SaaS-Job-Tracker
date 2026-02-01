@@ -2,21 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireUserOr401 } from "@/lib/auth";
 import { jsonError, zodToDetails } from "@/lib/errors";
-import { z } from "zod";
 import { contactCreateSchema, contactUpdateSchema } from "@/lib/validators/contacts";
+import { listByApplicationSchema } from "@/lib/validators/shared";
 import { AuditAction } from "@prisma/client";
 import { audit } from "@/lib/audit";
-
-const listQuerySchema = z.object({
-  applicationId: z.string().min(1)
-});
+import { enforceRateLimitAsync } from "@/lib/rateLimit";
 
 export async function GET(req: NextRequest) {
   const { userId, error } = await requireUserOr401();
   if (error) return error;
 
   const url = new URL(req.url);
-  const parsed = listQuerySchema.safeParse({
+  const parsed = listByApplicationSchema.safeParse({
     applicationId: url.searchParams.get("applicationId") ?? undefined
   });
   if (!parsed.success) return jsonError(400, "VALIDATION_ERROR", "Invalid query", zodToDetails(parsed.error));
@@ -36,6 +33,10 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  // Rate limit: 30 contacts per minute per IP
+  const rl = await enforceRateLimitAsync(req, "contacts:create", 30, 60_000);
+  if (rl) return rl;
+
   const { userId, error } = await requireUserOr401();
   if (error) return error;
 

@@ -78,6 +78,7 @@ model JobApplication {
   @@index([userId, company])
   @@index([userId, createdAt])
   @@index([userId, updatedAt])
+  @@index([tags], type: Gin)
 }
 
 model Note {

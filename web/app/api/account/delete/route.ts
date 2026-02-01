@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireUserOr401 } from "@/lib/auth";
 import { jsonError } from "@/lib/errors";
-import { enforceRateLimit } from "@/lib/rateLimit";
+import { enforceRateLimitAsync } from "@/lib/rateLimit";
 import { audit } from "@/lib/audit";
 import { AuditAction } from "@prisma/client";
 
 export async function POST(req: NextRequest) {
-  const rl = enforceRateLimit(req, "account:delete", 2, 60_000);
+  const rl = await enforceRateLimitAsync(req, "account:delete", 2, 60_000);
   if (rl) return rl;
 
   const { userId, error } = await requireUserOr401();
