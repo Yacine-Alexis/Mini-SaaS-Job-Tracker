@@ -52,13 +52,13 @@ export default function RegisterPage() {
 
       <form className="mt-5 space-y-3" onSubmit={onSubmit}>
         <div>
-          <label className="text-sm font-medium">Email</label>
-          <input className="input mt-1" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <label htmlFor="email" className="text-sm font-medium">Email</label>
+          <input id="email" className="input mt-1" value={email} onChange={(e) => setEmail(e.target.value)} />
         </div>
 
         <div>
-          <label className="text-sm font-medium">Password</label>
-          <input className="input mt-1" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          <label htmlFor="password" className="text-sm font-medium">Password</label>
+          <input id="password" className="input mt-1" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
         </div>
 
         {err && <div className="text-sm text-red-600">{err}</div>}
