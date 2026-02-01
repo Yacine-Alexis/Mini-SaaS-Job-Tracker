@@ -4,7 +4,7 @@ import { ReactNode } from "react";
 import Link from "next/link";
 
 interface EmptyStateProps {
-  icon?: "applications" | "notes" | "tasks" | "contacts" | "search" | "links" | "calendar" | "chart";
+  icon?: "applications" | "notes" | "tasks" | "contacts" | "search" | "links" | "calendar" | "chart" | "document";
   title: string;
   description?: string;
   action?: {
@@ -127,6 +127,26 @@ const illustrations = {
       <circle cx="55" cy="120" r="4" className="fill-green-500" />
       <circle cx="85" cy="105" r="4" className="fill-green-500" />
       <circle cx="125" cy="75" r="4" className="fill-green-500" />
+    </svg>
+  ),
+  document: (
+    <svg className="w-full h-full" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* Document / file illustration */}
+      <rect x="50" y="30" width="80" height="100" rx="6" className="fill-zinc-100 dark:fill-zinc-800 stroke-zinc-300 dark:stroke-zinc-600" strokeWidth="2" />
+      <path d="M100 30h24a6 6 0 016 6v14a6 6 0 01-6 6h-18a6 6 0 01-6-6V36" className="fill-zinc-50 dark:fill-zinc-700 stroke-zinc-300 dark:stroke-zinc-600" strokeWidth="2" />
+      <path d="M100 30v20a6 6 0 006 6h24" className="stroke-zinc-300 dark:stroke-zinc-600" strokeWidth="2" fill="none" />
+      {/* Document lines */}
+      <line x1="65" y1="70" x2="115" y2="70" className="stroke-zinc-300 dark:stroke-zinc-500" strokeWidth="2" strokeLinecap="round" />
+      <line x1="65" y1="85" x2="105" y2="85" className="stroke-zinc-300 dark:stroke-zinc-500" strokeWidth="2" strokeLinecap="round" />
+      <line x1="65" y1="100" x2="110" y2="100" className="stroke-zinc-300 dark:stroke-zinc-500" strokeWidth="2" strokeLinecap="round" />
+      {/* Second document behind */}
+      <rect x="70" y="50" width="80" height="100" rx="6" className="fill-blue-50 dark:fill-blue-900/20 stroke-blue-300 dark:stroke-blue-700" strokeWidth="2" />
+      <line x1="85" y1="80" x2="135" y2="80" className="stroke-blue-300 dark:stroke-blue-600" strokeWidth="2" strokeLinecap="round" />
+      <line x1="85" y1="95" x2="125" y2="95" className="stroke-blue-300 dark:stroke-blue-600" strokeWidth="2" strokeLinecap="round" />
+      <line x1="85" y1="110" x2="130" y2="110" className="stroke-blue-300 dark:stroke-blue-600" strokeWidth="2" strokeLinecap="round" />
+      {/* Plus icon */}
+      <circle cx="140" cy="140" r="25" className="fill-blue-500/10 stroke-blue-500" strokeWidth="2" />
+      <path d="M140 130v20M130 140h20" className="stroke-blue-500" strokeWidth="3" strokeLinecap="round" />
     </svg>
   ),
 };

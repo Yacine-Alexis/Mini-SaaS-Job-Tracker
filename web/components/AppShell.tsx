@@ -12,15 +12,15 @@ const mainNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: DashboardIcon },
   { href: "/applications", label: "Applications", icon: ApplicationsIcon },
   { href: "/calendar", label: "Calendar", icon: CalendarIcon },
+  { href: "/documents", label: "Documents", icon: DocumentIcon },
   { href: "/analytics", label: "Analytics", icon: ChartIcon },
   { href: "/applications/import", label: "Import", icon: ImportIcon },
 ];
 
 const comingSoonItems = [
-  { label: "Resume Builder", icon: DocumentIcon, badge: "Soon" },
-  { label: "Cover Letters", icon: LetterIcon, badge: "Soon" },
   { label: "Interview Prep", icon: MicIcon, badge: "Soon" },
   { label: "Salary Insights", icon: ChartIcon, badge: "Pro" },
+  { label: "Email Templates", icon: LetterIcon, badge: "Soon" },
 ];
 
 export default function AppShell({ children }: { children: React.ReactNode }) {

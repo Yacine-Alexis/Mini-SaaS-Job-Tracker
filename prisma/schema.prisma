@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../web/node_modules/.prisma/client"
 }
 
 datasource db {
@@ -81,6 +82,7 @@ model User {
   contacts        Contact[]
   attachmentLinks AttachmentLink[]
   interviews      Interview[]
+  documents       Document[]
   passwordResetTokens PasswordResetToken[]
   auditLogs       AuditLog[]
 
@@ -121,6 +123,7 @@ model JobApplication {
   contacts        Contact[]
   attachmentLinks AttachmentLink[]
   interviews      Interview[]
+  documents       Document[]
 
   @@index([userId, stage])
   @@index([userId, company])
@@ -238,6 +241,38 @@ model Interview {
   @@index([applicationId, deletedAt])
 }
 
+enum DocumentType {
+  RESUME
+  COVER_LETTER
+  PORTFOLIO
+  OTHER
+}
+
+model Document {
+  id             String         @id @default(cuid())
+  userId         String
+  applicationId  String?        // Optional: link to specific application
+
+  user           User           @relation(fields: [userId], references: [id], onDelete: Restrict)
+  application    JobApplication? @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+
+  name           String         // Display name
+  type           DocumentType   @default(RESUME)
+  fileName       String         // Original file name
+  fileUrl        String?        // External URL (Google Drive, Dropbox, etc.)
+  fileContent    String?        // For text-based content storage
+  version        String?        // e.g., "v1", "Tech Resume", "Marketing Focus"
+  isDefault      Boolean        @default(false) // Mark as default for the type
+  
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  deletedAt      DateTime?
+
+  @@index([userId, type])
+  @@index([userId, applicationId])
+  @@index([userId, isDefault])
+}
+
 model PasswordResetToken {
   id        String   @id @default(cuid())
   userId    String
@@ -273,6 +308,9 @@ enum AuditAction {
   INTERVIEW_CREATED
   INTERVIEW_UPDATED
   INTERVIEW_DELETED
+  DOCUMENT_CREATED
+  DOCUMENT_UPDATED
+  DOCUMENT_DELETED
   EXPORT_CSV
   BILLING_UPGRADED
   BILLING_DOWNGRADED
