@@ -19,7 +19,7 @@ test("smoke: register, create application, add task", async ({ page }) => {
   await expect(page).toHaveURL(/\/applications/);
 
   // Create application
-  await page.getByRole("link", { name: "New" }).click();
+  await page.getByRole("main").getByRole("link", { name: "New" }).click();
   await expect(page).toHaveURL(/\/applications\/new/);
 
   await page.getByLabel("Company").fill("Acme Inc");
