@@ -5,12 +5,6 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 import { jsonError } from "@/lib/errors";
 
-// Admin credentials from environment variables
-// Set these in .env: ADMIN_EMAIL and ADMIN_PASSWORD
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "";
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
-const ADMIN_ID = "admin-user-id-12345";
-
 export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
   providers: [
@@ -26,22 +20,7 @@ export const authOptions: NextAuthOptions = {
 
         if (!email || !password) return null;
 
-        // Check for admin login first
-        if (ADMIN_EMAIL && ADMIN_PASSWORD && email === ADMIN_EMAIL.toLowerCase() && password === ADMIN_PASSWORD) {
-          // Ensure admin user exists in DB with PRO plan
-          const adminUser = await prisma.user.upsert({
-            where: { id: ADMIN_ID },
-            update: { plan: "PRO" },
-            create: {
-              id: ADMIN_ID,
-              email: ADMIN_EMAIL.toLowerCase(),
-              passwordHash: await bcrypt.hash(ADMIN_PASSWORD, 12),
-              plan: "PRO"
-            }
-          });
-          return { id: adminUser.id, email: adminUser.email };
-        }
-
+        // All users (including admins) are authenticated via database
         const user = await prisma.user.findFirst({
           where: { email, deletedAt: null }
         });

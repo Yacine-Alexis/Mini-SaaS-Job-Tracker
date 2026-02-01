@@ -10,7 +10,7 @@ import { AuditAction } from "@prisma/client";
 
 const schema = z.object({
   currentPassword: z.string().min(1),
-  newPassword: z.string().min(8).max(200)
+  newPassword: z.string().min(8).max(72) // bcrypt truncates at 72 bytes
 });
 
 export async function POST(req: NextRequest) {

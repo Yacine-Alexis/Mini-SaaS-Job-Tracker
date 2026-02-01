@@ -518,16 +518,17 @@ function InputField({
   const hasError = !!error;
   const showValid = isValid && !hasError;
   const inputId = id ?? label.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  const errorId = `${inputId}-error`;
 
   return (
     <div>
       <label htmlFor={inputId} className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
         {label}
-        {required && <span className="text-red-500 ml-0.5">*</span>}
+        {required && <span className="text-red-500 ml-0.5" aria-hidden="true">*</span>}
       </label>
       <div className="relative">
         {prefix && (
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-sm pointer-events-none">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-sm pointer-events-none" aria-hidden="true">
             {prefix}
           </span>
         )}
@@ -539,6 +540,10 @@ function InputField({
           onBlur={onBlur}
           onFocus={onFocus}
           placeholder={placeholder}
+          required={required}
+          aria-required={required}
+          aria-invalid={hasError}
+          aria-describedby={hasError ? errorId : undefined}
           className={`
             w-full rounded-lg border px-3 py-2.5 text-sm outline-none transition-all text-zinc-900 dark:text-zinc-100
             ${prefix ? "pl-7" : ""}
@@ -552,7 +557,7 @@ function InputField({
         />
         {/* Status icon */}
         {(hasError || showValid) && (
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden="true">
             {hasError ? (
               <svg className="h-4 w-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -566,8 +571,8 @@ function InputField({
         )}
       </div>
       {hasError && (
-        <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
-          <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <p id={errorId} className="mt-1 text-xs text-red-600 flex items-center gap-1" role="alert">
+          <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01" />
           </svg>
           {error}

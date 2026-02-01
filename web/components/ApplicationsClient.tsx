@@ -4,6 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ApplicationStage } from "@prisma/client";
 
+const PAGE_SIZE_OPTIONS = [10, 20, 50, 100] as const;
+const DEFAULT_PAGE_SIZE = 20;
+
 type AppItem = {
   id: string;
   company: string;
@@ -28,18 +31,19 @@ export default function ApplicationsClient() {
   const [to, setTo] = useState("");     // yyyy-mm-dd (appliedDate to)
 
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   const queryString = useMemo(() => {
     const sp = new URLSearchParams();
     sp.set("page", String(page));
-    sp.set("pageSize", "20");
+    sp.set("pageSize", String(pageSize));
     if (q.trim()) sp.set("q", q.trim());
     if (stage) sp.set("stage", stage);
     if (tags.trim()) sp.set("tags", tags.trim());
     if (from) sp.set("from", new Date(from).toISOString());
     if (to) sp.set("to", new Date(to).toISOString());
     return sp.toString();
-  }, [q, stage, tags, from, to, page]);
+  }, [q, stage, tags, from, to, page, pageSize]);
 
   async function load() {
     setLoading(true);
@@ -233,8 +237,23 @@ export default function ApplicationsClient() {
         <button className="btn" disabled={page <= 1 || loading} onClick={() => setPage((p) => p - 1)}>
           Prev
         </button>
-        <div className="text-sm text-zinc-600">Page {page}</div>
-        <button className="btn" disabled={loading || items.length < 20} onClick={() => setPage((p) => p + 1)}>
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-zinc-600">Page {page}</span>
+          <select
+            className="input text-sm py-1"
+            value={pageSize}
+            onChange={(e) => {
+              setPageSize(Number(e.target.value));
+              setPage(1);
+            }}
+            aria-label="Items per page"
+          >
+            {PAGE_SIZE_OPTIONS.map((size) => (
+              <option key={size} value={size}>{size} per page</option>
+            ))}
+          </select>
+        </div>
+        <button className="btn" disabled={loading || items.length < pageSize} onClick={() => setPage((p) => p + 1)}>
           Next
         </button>
       </div>

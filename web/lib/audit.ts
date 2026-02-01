@@ -20,7 +20,8 @@ export async function audit(req: NextRequest, userId: string, action: AuditActio
         userAgent: req.headers.get("user-agent") ?? null
       }
     });
-  } catch {
-    // never block the request if audit logging fails
+  } catch (error) {
+    // Log but never block the request if audit logging fails
+    console.error("[Audit] Failed to log action:", action, error instanceof Error ? error.message : error);
   }
 }

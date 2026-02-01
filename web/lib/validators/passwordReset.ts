@@ -6,5 +6,5 @@ export const forgotPasswordSchema = z.object({
 
 export const resetPasswordSchema = z.object({
   token: z.string().min(10),
-  newPassword: z.string().min(8).max(200)
+  newPassword: z.string().min(8).max(72) // bcrypt truncates at 72 bytes
 });
