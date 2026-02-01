@@ -60,7 +60,13 @@ export async function GET(req: NextRequest) {
 
   const items = await prisma.jobApplication.findMany({
     where,
-    orderBy: { updatedAt: "desc" }
+    orderBy: { updatedAt: "desc" },
+    include: {
+      interviews: {
+        where: { deletedAt: null },
+        orderBy: { scheduledAt: "asc" }
+      }
+    }
   });
 
   const header = [
@@ -74,24 +80,33 @@ export async function GET(req: NextRequest) {
     "appliedDate",
     "source",
     "tags",
+    "interviewCount",
+    "nextInterview",
     "createdAt",
     "updatedAt"
   ].join(",");
 
-  const rows = items.map((it) => [
-    csvEscape(it.company),
-    csvEscape(it.title),
-    csvEscape(it.stage),
-    csvEscape(it.location),
-    csvEscape(it.url),
-    csvEscape(it.salaryMin),
-    csvEscape(it.salaryMax),
-    csvEscape(it.appliedDate ? it.appliedDate.toISOString() : ""),
-    csvEscape(it.source),
-    csvEscape((it.tags ?? []).join("|")),
-    csvEscape(it.createdAt.toISOString()),
-    csvEscape(it.updatedAt.toISOString())
-  ].join(","));
+  const rows = items.map((it) => {
+    const upcomingInterview = it.interviews.find(
+      (i) => new Date(i.scheduledAt) > new Date()
+    );
+    return [
+      csvEscape(it.company),
+      csvEscape(it.title),
+      csvEscape(it.stage),
+      csvEscape(it.location),
+      csvEscape(it.url),
+      csvEscape(it.salaryMin),
+      csvEscape(it.salaryMax),
+      csvEscape(it.appliedDate ? it.appliedDate.toISOString() : ""),
+      csvEscape(it.source),
+      csvEscape((it.tags ?? []).join("|")),
+      csvEscape(it.interviews.length),
+      csvEscape(upcomingInterview ? upcomingInterview.scheduledAt.toISOString() : ""),
+      csvEscape(it.createdAt.toISOString()),
+      csvEscape(it.updatedAt.toISOString())
+    ].join(",");
+  });
 
   const csv = [header, ...rows].join("\n");
 

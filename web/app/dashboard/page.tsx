@@ -43,7 +43,8 @@ export default async function DashboardPage() {
     tasks,
     recentApps,
     weeklyData,
-    salaryStats
+    salaryStats,
+    upcomingInterviews
   ] = await Promise.all([
     // Count by stage using groupBy
     prisma.jobApplication.groupBy({
@@ -90,6 +91,20 @@ export default async function DashboardPage() {
       where: { userId, deletedAt: null, OR: [{ salaryMin: { not: null } }, { salaryMax: { not: null } }] },
       _avg: { salaryMin: true, salaryMax: true },
       _count: true
+    }),
+    // Upcoming interviews (next 7 days)
+    prisma.interview.findMany({
+      where: {
+        userId,
+        deletedAt: null,
+        scheduledAt: { gte: now },
+        result: "PENDING"
+      },
+      orderBy: { scheduledAt: "asc" },
+      take: 5,
+      include: {
+        application: { select: { id: true, company: true, title: true } }
+      }
     })
   ]);
 
@@ -225,6 +240,58 @@ export default async function DashboardPage() {
 
         {/* Right Column - Tasks & Recent */}
         <div className="space-y-6">
+          {/* Upcoming Interviews */}
+          <div className="card p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-semibold text-zinc-900 dark:text-zinc-100">🎤 Upcoming Interviews</h2>
+              <Link href="/applications" className="text-xs text-blue-600 dark:text-blue-400 hover:underline">View all</Link>
+            </div>
+            {upcomingInterviews.length > 0 ? (
+              <div className="space-y-3">
+                {upcomingInterviews.map((interview) => {
+                  const date = new Date(interview.scheduledAt);
+                  const isToday = date.toDateString() === now.toDateString();
+                  const isTomorrow = date.toDateString() === new Date(now.getTime() + 86400000).toDateString();
+                  const dayLabel = isToday ? "Today" : isTomorrow ? "Tomorrow" : date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+                  return (
+                    <Link
+                      key={interview.id}
+                      href={`/applications/${interview.application.id}`}
+                      className="flex items-start gap-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 hover:border-amber-300 dark:hover:border-amber-700 transition-colors"
+                    >
+                      <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center">
+                        <span className="text-lg">📅</span>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                          {interview.application.company}
+                        </p>
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
+                          {interview.application.title}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className={`text-xs font-medium ${isToday ? "text-red-600 dark:text-red-400" : "text-amber-600 dark:text-amber-400"}`}>
+                            {dayLabel} • {date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+                          </span>
+                          <span className="text-xs text-zinc-400 dark:text-zinc-500 capitalize">
+                            {interview.type.toLowerCase()}
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-6 text-zinc-500 dark:text-zinc-400">
+                <svg className="mx-auto h-8 w-8 mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <p className="text-sm">No upcoming interviews</p>
+              </div>
+            )}
+          </div>
+
           {/* Upcoming Tasks */}
           <div className="card p-6">
             <div className="flex items-center justify-between mb-4">
