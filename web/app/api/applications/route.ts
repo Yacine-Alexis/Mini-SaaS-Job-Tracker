@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { jsonError, zodToDetails } from "@/lib/errors";
 import { requireUserOr401 } from "@/lib/auth";
-import { applicationCreateSchema, applicationListQuerySchema } from "@/lib/validators/applications";
+import { applicationCreateSchema, applicationListQuerySchema, validateSalaryRange } from "@/lib/validators/applications";
 import { buildApplicationFilter } from "@/lib/validators/shared";
 import { paginationQuerySchema, toSkipTake } from "@/lib/pagination";
 import { getUserPlan, isPro, LIMITS } from "@/lib/plan";
@@ -27,12 +27,14 @@ export async function GET(req: NextRequest) {
     q: url.searchParams.get("q") ?? undefined,
     tags: url.searchParams.get("tags") ?? undefined,
     from: url.searchParams.get("from") ?? undefined,
-    to: url.searchParams.get("to") ?? undefined
+    to: url.searchParams.get("to") ?? undefined,
+    sortBy: url.searchParams.get("sortBy") ?? undefined,
+    sortDir: url.searchParams.get("sortDir") ?? undefined
   });
   if (!qParsed.success) return jsonError(400, "VALIDATION_ERROR", "Invalid filters", zodToDetails(qParsed.error));
 
   const { skip, take } = toSkipTake(pParsed.data);
-  const { stage, q, tags, from, to } = qParsed.data;
+  const { stage, q, tags, from, to, sortBy, sortDir } = qParsed.data;
 
   const tagList =
     tags?.split(",").map((t) => t.trim()).filter(Boolean) ?? [];
@@ -47,11 +49,16 @@ export async function GET(req: NextRequest) {
     to
   });
 
+  // Build orderBy from sort parameters (default: updatedAt desc)
+  const orderByField = sortBy ?? "updatedAt";
+  const orderByDir = sortDir ?? "desc";
+  const orderBy = { [orderByField]: orderByDir };
+
   const [total, items] = await Promise.all([
     prisma.jobApplication.count({ where }),
     prisma.jobApplication.findMany({
       where,
-      orderBy: { updatedAt: "desc" },
+      orderBy,
       skip,
       take
     })
@@ -87,19 +94,34 @@ export async function POST(req: NextRequest) {
     return jsonError(400, "VALIDATION_ERROR", "Invalid input", zodToDetails(parsed.error));
   }
 
+  const d = parsed.data;
+
+  // Manual salary validation (separated from Zod to preserve types)
+  if (!validateSalaryRange(d)) {
+    return jsonError(400, "VALIDATION_ERROR", "salaryMin must be <= salaryMax");
+  }
+
   const created = await prisma.jobApplication.create({
     data: {
       userId,
-      company: parsed.data.company,
-      title: parsed.data.title,
-      location: parsed.data.location ?? null,
-      url: parsed.data.url ?? null,
-      salaryMin: parsed.data.salaryMin ?? null,
-      salaryMax: parsed.data.salaryMax ?? null,
-      stage: parsed.data.stage ?? undefined,
-      appliedDate: parsed.data.appliedDate ? new Date(parsed.data.appliedDate) : null,
-      source: parsed.data.source ?? null,
-      tags: parsed.data.tags ?? []
+      company: d.company,
+      title: d.title,
+      location: d.location ?? null,
+      url: d.url ?? null,
+      salaryMin: d.salaryMin ?? null,
+      salaryMax: d.salaryMax ?? null,
+      salaryCurrency: d.salaryCurrency ?? null,
+      stage: d.stage ?? undefined,
+      appliedDate: d.appliedDate ? new Date(d.appliedDate) : null,
+      source: d.source ?? null,
+      tags: d.tags ?? [],
+      // Extended fields
+      priority: d.priority ?? undefined,
+      remoteType: d.remoteType ?? null,
+      jobType: d.jobType ?? null,
+      description: d.description ?? null,
+      nextFollowUp: d.nextFollowUp ? new Date(d.nextFollowUp) : null,
+      rejectionReason: d.rejectionReason ?? null
     }
   });
 

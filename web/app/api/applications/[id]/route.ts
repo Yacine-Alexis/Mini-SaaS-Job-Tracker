@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { jsonError, zodToDetails } from "@/lib/errors";
 import { requireUserOr401 } from "@/lib/auth";
-import { applicationUpdateSchema } from "@/lib/validators/applications";
+import { applicationUpdateSchema, validateSalaryRange } from "@/lib/validators/applications";
 import { AuditAction } from "@prisma/client";
 import { audit } from "@/lib/audit";
 
@@ -36,11 +36,37 @@ export async function PATCH(req: NextRequest, ctx: RouteContext) {
   });
   if (!existing) return jsonError(404, "NOT_FOUND", "Application not found");
 
+  const d = parsed.data;
+
+  // Manual salary validation (separated from Zod to preserve types)
+  if (!validateSalaryRange(d)) {
+    return jsonError(400, "VALIDATION_ERROR", "salaryMin must be <= salaryMax");
+  }
+  
   const updated = await prisma.jobApplication.update({
     where: { id },
     data: {
-      ...parsed.data,
-      appliedDate: parsed.data.appliedDate ? new Date(parsed.data.appliedDate) : parsed.data.appliedDate === null ? null : undefined
+      company: d.company,
+      title: d.title,
+      location: d.location,
+      url: d.url,
+      salaryMin: d.salaryMin,
+      salaryMax: d.salaryMax,
+      salaryCurrency: d.salaryCurrency,
+      stage: d.stage,
+      source: d.source,
+      tags: d.tags,
+      priority: d.priority,
+      remoteType: d.remoteType,
+      jobType: d.jobType,
+      description: d.description,
+      rejectionReason: d.rejectionReason,
+      appliedDate: d.appliedDate !== undefined 
+        ? (d.appliedDate ? new Date(d.appliedDate) : null) 
+        : undefined,
+      nextFollowUp: d.nextFollowUp !== undefined 
+        ? (d.nextFollowUp ? new Date(d.nextFollowUp) : null) 
+        : undefined
     }
   });
 

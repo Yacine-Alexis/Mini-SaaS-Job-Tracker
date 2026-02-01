@@ -78,23 +78,17 @@ export async function GET(_req: NextRequest) {
       },
       select: { createdAt: true }
     }),
-    // Get top tags
+    // Get top tags using raw SQL for efficiency (avoids loading all applications)
     (async () => {
-      const apps = await prisma.jobApplication.findMany({
-        where: { userId, deletedAt: null },
-        select: { tags: true }
-      });
-      const tagCounts = new Map<string, number>();
-      for (const app of apps) {
-        for (const tag of app.tags) {
-          const normalized = tag.toLowerCase().trim();
-          tagCounts.set(normalized, (tagCounts.get(normalized) || 0) + 1);
-        }
-      }
-      return Array.from(tagCounts.entries())
-        .map(([tag, count]) => ({ tag, count }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 10);
+      const result = await prisma.$queryRaw<{ tag: string; count: bigint }[]>`
+        SELECT LOWER(TRIM(unnest(tags))) as tag, COUNT(*) as count
+        FROM "JobApplication"
+        WHERE "userId" = ${userId} AND "deletedAt" IS NULL
+        GROUP BY LOWER(TRIM(unnest(tags)))
+        ORDER BY count DESC
+        LIMIT 10
+      `;
+      return result.map(r => ({ tag: r.tag, count: Number(r.count) }));
     })()
   ]);
 

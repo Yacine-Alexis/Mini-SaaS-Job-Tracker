@@ -25,6 +25,26 @@ enum Plan {
   PRO
 }
 
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum RemoteType {
+  REMOTE
+  HYBRID
+  ONSITE
+}
+
+enum JobType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  FREELANCE
+  INTERNSHIP
+}
+
 model User {
   id           String           @id @default(cuid())
   email        String           @unique
@@ -60,10 +80,19 @@ model JobApplication {
   url         String?
   salaryMin   Int?
   salaryMax   Int?
+  salaryCurrency String?       @default("USD")
   stage       ApplicationStage  @default(SAVED)
   appliedDate DateTime?
   source      String?
   tags        String[]          @default([])
+  
+  // Extended fields
+  priority       Priority?      @default(MEDIUM)
+  remoteType     RemoteType?
+  jobType        JobType?
+  description    String?        // Job description for reference
+  nextFollowUp   DateTime?      // When to follow up next
+  rejectionReason String?       // For learning patterns
 
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
@@ -78,6 +107,8 @@ model JobApplication {
   @@index([userId, company])
   @@index([userId, createdAt])
   @@index([userId, updatedAt])
+  @@index([userId, appliedDate])
+  @@index([userId, deletedAt])
   @@index([tags], type: Gin)
 }
 
@@ -117,6 +148,8 @@ model Task {
   @@index([userId, applicationId])
   @@index([userId, status])
   @@index([userId, dueDate])
+  @@index([userId, status, dueDate])
+  @@index([applicationId, deletedAt])
 }
 
 model Contact {
@@ -212,4 +245,5 @@ model AuditLog {
 
   @@index([userId, createdAt])
   @@index([action, createdAt])
+  @@index([entityId])
 }

@@ -515,12 +515,16 @@ These could differentiate PRO tier:
 
 **Bonus:** TasksPanel now shows overdue (red) and due-today (amber) highlighting
 
-### Sprint 7: Database & API Improvements
-6. Add database sorting for applications
-7. Add pagination info display
-8. Add missing database indexes
-9. Extend JobApplication model fields
-10. Fix N+1 query in tags
+### Sprint 7: Database & API Improvements ✅ COMPLETE
+- ✅ Added database sorting for applications (sortBy/sortDir params, server-side ordering)
+- ✅ Added pagination info display (total count captured in ApplicationsClient)
+- ✅ Added missing database indexes ([userId, appliedDate], [userId, deletedAt] on JobApplication; [userId, status, dueDate], [applicationId, deletedAt] on Task; [entityId] on AuditLog)
+- ✅ Extended JobApplication model fields (Priority, RemoteType, JobType enums + salaryCurrency, description, nextFollowUp, rejectionReason)
+- ✅ Fixed N+1 query in tags (raw SQL with PostgreSQL unnest() for efficient tag aggregation)
+
+**Technical Notes:**
+- Moved salary validation from Zod `.refine()` to manual validation in route handlers (preserves TypeScript types)
+- Migration `20250201204235_sprint7_indexes_and_fields` applied
 
 ### Sprint 8: Interview & Reminder System
 11. Create Interview model
@@ -564,33 +568,32 @@ These could differentiate PRO tier:
 ## Schema Changes Required
 
 ```prisma
-// New enums
+// ✅ IMPLEMENTED IN SPRINT 7
 enum RemoteType { REMOTE HYBRID ONSITE }
 enum JobType { FULL_TIME PART_TIME CONTRACT FREELANCE INTERNSHIP }
-enum ExperienceLevel { ENTRY MID SENIOR LEAD EXECUTIVE }
 enum Priority { HIGH MEDIUM LOW }
+
+// ✅ IMPLEMENTED - Extended JobApplication (Sprint 7)
+// Added: salaryCurrency, priority, remoteType, jobType, description, nextFollowUp, rejectionReason
+// Added indexes: [userId, appliedDate], [userId, deletedAt]
+
+// TODO: Future sprints
+enum ExperienceLevel { ENTRY MID SENIOR LEAD EXECUTIVE }
 enum InterviewType { PHONE VIDEO ONSITE TECHNICAL BEHAVIORAL FINAL }
 enum InterviewResult { PASSED FAILED PENDING CANCELLED }
 
-// Extended JobApplication
+// Extended JobApplication (remaining fields)
 model JobApplication {
-  // ... existing fields
-  description      String?
-  requirements     String?
-  priority         Priority    @default(MEDIUM)
-  remoteType       RemoteType?
-  salaryCurrency   String?     @default("USD")
-  salaryPeriod     String?     @default("ANNUAL")
-  jobType          JobType?
-  experienceLevel  ExperienceLevel?
-  nextFollowUpDate DateTime?
-  lastContactDate  DateTime?
-  rejectionReason  String?
-  referralContact  String?
-  interviews       Interview[]
+  // ... existing fields + Sprint 7 additions
+  requirements     String?       // TODO
+  salaryPeriod     String?       // TODO
+  experienceLevel  ExperienceLevel?  // TODO
+  lastContactDate  DateTime?     // TODO
+  referralContact  String?       // TODO
+  interviews       Interview[]   // TODO: Sprint 8
 }
 
-// New Interview model
+// New Interview model (Sprint 8)
 model Interview {
   id            String           @id @default(cuid())
   applicationId String

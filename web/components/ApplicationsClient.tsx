@@ -39,6 +39,7 @@ const stageColors: Record<ApplicationStage, string> = {
 export default function ApplicationsClient() {
   const { addToast } = useToast();
   const [items, setItems] = useState<AppItem[]>([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
 
@@ -71,13 +72,15 @@ export default function ApplicationsClient() {
     const sp = new URLSearchParams();
     sp.set("page", String(page));
     sp.set("pageSize", String(pageSize));
+    sp.set("sortBy", sortField);
+    sp.set("sortDir", sortDir);
     if (debouncedQ.trim()) sp.set("q", debouncedQ.trim());
     if (stage) sp.set("stage", stage);
     if (tags.trim()) sp.set("tags", tags.trim());
     if (from) sp.set("from", `${from}T00:00:00`);
     if (to) sp.set("to", `${to}T23:59:59`);
     return sp.toString();
-  }, [debouncedQ, stage, tags, from, to, page, pageSize]);
+  }, [debouncedQ, stage, tags, from, to, page, pageSize, sortField, sortDir]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -90,6 +93,7 @@ export default function ApplicationsClient() {
         return;
       }
       setItems(data.items ?? []);
+      setTotal(data.total ?? 0);
       setSelectedIds(new Set()); // Clear selection on reload
     } catch {
       setErr("Failed to load");
@@ -102,40 +106,7 @@ export default function ApplicationsClient() {
     void load();
   }, [load]);
 
-  // Sort items client-side
-  const sortedItems = useMemo(() => {
-    return [...items].sort((a, b) => {
-      let aVal: string | number = "";
-      let bVal: string | number = "";
-
-      switch (sortField) {
-        case "company":
-          aVal = a.company.toLowerCase();
-          bVal = b.company.toLowerCase();
-          break;
-        case "title":
-          aVal = a.title.toLowerCase();
-          bVal = b.title.toLowerCase();
-          break;
-        case "stage":
-          aVal = a.stage;
-          bVal = b.stage;
-          break;
-        case "updatedAt":
-          aVal = new Date(a.updatedAt).getTime();
-          bVal = new Date(b.updatedAt).getTime();
-          break;
-        case "appliedDate":
-          aVal = a.appliedDate ? new Date(a.appliedDate).getTime() : 0;
-          bVal = b.appliedDate ? new Date(b.appliedDate).getTime() : 0;
-          break;
-      }
-
-      if (aVal < bVal) return sortDir === "asc" ? -1 : 1;
-      if (aVal > bVal) return sortDir === "asc" ? 1 : -1;
-      return 0;
-    });
-  }, [items, sortField, sortDir]);
+  // Items are now sorted by the API, no client-side sorting needed
 
   function handleSort(field: SortField) {
     if (sortField === field) {
@@ -144,6 +115,7 @@ export default function ApplicationsClient() {
       setSortField(field);
       setSortDir("asc");
     }
+    setPage(1); // Reset to first page when sort changes
   }
 
   function resetPageAnd<T>(fn: () => T) {
@@ -152,14 +124,14 @@ export default function ApplicationsClient() {
   }
 
   // Selection handlers
-  const allSelected = sortedItems.length > 0 && selectedIds.size === sortedItems.length;
-  const someSelected = selectedIds.size > 0 && selectedIds.size < sortedItems.length;
+  const allSelected = items.length > 0 && selectedIds.size === items.length;
+  const someSelected = selectedIds.size > 0 && selectedIds.size < items.length;
 
   function toggleSelectAll() {
     if (allSelected) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(sortedItems.map((it) => it.id)));
+      setSelectedIds(new Set(items.map((it) => it.id)));
     }
   }
 
@@ -497,7 +469,7 @@ export default function ApplicationsClient() {
       )}
 
       {/* Data Table */}
-      {!loading && !err && sortedItems.length > 0 && (
+      {!loading && !err && items.length > 0 && (
         <div className="card overflow-hidden">
           {/* Desktop Table */}
           <div className="hidden md:block overflow-x-auto">
@@ -508,7 +480,7 @@ export default function ApplicationsClient() {
                     <input
                       type="checkbox"
                       className="rounded border-zinc-300 dark:border-zinc-600 text-blue-600 focus:ring-blue-500"
-                      checked={selectedIds.size === sortedItems.length && sortedItems.length > 0}
+                      checked={selectedIds.size === items.length && items.length > 0}
                       onChange={toggleSelectAll}
                     />
                   </th>
@@ -552,7 +524,7 @@ export default function ApplicationsClient() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-                {sortedItems.map((it) => (
+                {items.map((it) => (
                   <tr 
                     key={it.id} 
                     className={`
@@ -630,7 +602,7 @@ export default function ApplicationsClient() {
 
           {/* Mobile Cards */}
           <div className="md:hidden divide-y divide-zinc-100 dark:divide-zinc-800">
-            {sortedItems.map((it) => (
+            {items.map((it) => (
               <div 
                 key={it.id} 
                 className={`p-4 ${selectedIds.has(it.id) ? "bg-blue-50 dark:bg-blue-900/20" : ""}`}
@@ -686,46 +658,72 @@ export default function ApplicationsClient() {
       )}
 
       {/* Pagination */}
-      {!loading && !err && items.length > 0 && (
-        <div className="flex items-center justify-between">
-          <button 
-            className="btn flex items-center gap-1" 
-            disabled={page <= 1 || loading} 
-            onClick={() => setPage((p) => p - 1)}
-          >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Previous
-          </button>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-zinc-600 dark:text-zinc-400">
-              Page <span className="font-medium text-zinc-900 dark:text-zinc-100">{page}</span>
+      {!loading && !err && total > 0 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          {/* Results info */}
+          <div className="text-sm text-zinc-600 dark:text-zinc-400">
+            Showing{" "}
+            <span className="font-medium text-zinc-900 dark:text-zinc-100">
+              {Math.min((page - 1) * pageSize + 1, total)}
             </span>
-            <select
-              className="input text-sm py-1.5"
-              value={pageSize}
-              onChange={(e) => {
-                setPageSize(Number(e.target.value));
-                setPage(1);
-              }}
-              aria-label="Items per page"
-            >
-              {PAGE_SIZE_OPTIONS.map((size) => (
-                <option key={size} value={size}>{size} per page</option>
-              ))}
-            </select>
+            {" - "}
+            <span className="font-medium text-zinc-900 dark:text-zinc-100">
+              {Math.min(page * pageSize, total)}
+            </span>
+            {" of "}
+            <span className="font-medium text-zinc-900 dark:text-zinc-100">{total}</span>
+            {" results"}
           </div>
-          <button 
-            className="btn flex items-center gap-1" 
-            disabled={loading || items.length < pageSize} 
-            onClick={() => setPage((p) => p + 1)}
+
+          {/* Page controls */}
+          <div className="flex items-center gap-2">
+            <button 
+              className="btn flex items-center gap-1" 
+              disabled={page <= 1 || loading} 
+              onClick={() => setPage((p) => p - 1)}
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              <span className="hidden sm:inline">Previous</span>
+            </button>
+
+            {/* Page number display */}
+            <span className="text-sm text-zinc-600 dark:text-zinc-400 px-2">
+              Page{" "}
+              <span className="font-medium text-zinc-900 dark:text-zinc-100">{page}</span>
+              {" of "}
+              <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                {Math.max(1, Math.ceil(total / pageSize))}
+              </span>
+            </span>
+
+            <button 
+              className="btn flex items-center gap-1" 
+              disabled={loading || page >= Math.ceil(total / pageSize)} 
+              onClick={() => setPage((p) => p + 1)}
+            >
+              <span className="hidden sm:inline">Next</span>
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Page size selector */}
+          <select
+            className="input text-sm py-1.5"
+            value={pageSize}
+            onChange={(e) => {
+              setPageSize(Number(e.target.value));
+              setPage(1);
+            }}
+            aria-label="Items per page"
           >
-            Next
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
+            {PAGE_SIZE_OPTIONS.map((size) => (
+              <option key={size} value={size}>{size} per page</option>
+            ))}
+          </select>
         </div>
       )}
 
