@@ -1,6 +1,7 @@
 import "./globals.css";
 import Providers from "@/app/providers";
 import AppShell from "@/components/AppShell";
+import { SkipLink } from "@/lib/accessibility";
 
 export const metadata = {
   title: "JobTracker – Track Your Job Applications",
@@ -44,6 +45,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body>
+        <SkipLink />
         <Providers>
           <AppShell>{children}</AppShell>
         </Providers>
