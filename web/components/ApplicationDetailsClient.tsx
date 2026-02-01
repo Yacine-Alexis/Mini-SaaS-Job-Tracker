@@ -8,6 +8,7 @@ import ApplicationQuickEdit from "@/components/ApplicationQuickEdit";
 import ContactsPanel from "@/components/ContactsPanel";
 import AttachmentLinksPanel from "@/components/AttachmentLinksPanel";
 import InterviewsPanel from "@/components/InterviewsPanel";
+import TimelinePanel from "@/components/TimelinePanel";
 import StageProgressIndicator from "@/components/StageProgressIndicator";
 import SalaryDisplay, { SalaryRangeBar } from "@/components/SalaryDisplay";
 import { ApplicationStage } from "@prisma/client";
@@ -116,7 +117,8 @@ export default function ApplicationDetailsClient({ id }: { id: string }) {
         <InterviewsPanel applicationId={id} />
         <ContactsPanel applicationId={id} />
         <AttachmentLinksPanel applicationId={id} />
-        </div>
+        <TimelinePanel applicationId={id} />
+      </div>
 
     </div>
   );
