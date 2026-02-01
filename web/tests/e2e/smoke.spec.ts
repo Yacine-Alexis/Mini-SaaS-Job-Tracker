@@ -27,7 +27,9 @@ test("smoke: register, create application, add task", async ({ page }) => {
   await page.getByLabel("Tags").fill("remote, referral");
   await page.getByRole("button", { name: "Create Application" }).click();
 
-  await expect(page).toHaveURL(/\/applications/);
+  // Wait for redirect and list to load
+  await expect(page).toHaveURL(/\/applications$/);
+  await expect(page.getByRole("link", { name: "Acme Inc" })).toBeVisible();
 
   // Open details
   await page.getByRole("link", { name: "Acme Inc" }).click();
