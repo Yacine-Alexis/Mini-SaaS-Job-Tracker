@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
+import AuthLayout from "@/components/AuthLayout";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -27,29 +28,116 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="mx-auto max-w-md card p-6">
-      <h1 className="text-xl font-semibold">Sign in</h1>
-      <p className="mt-1 text-sm text-zinc-600">
-        No account? <Link className="underline" href="/register">Create one</Link>
-      </p>
-
-      <form className="mt-5 space-y-3" onSubmit={onSubmit}>
+    <AuthLayout
+      title="Welcome back"
+      subtitle="Sign in to your account to continue tracking your job search"
+    >
+      <form className="space-y-5" onSubmit={onSubmit}>
+        {/* Email */}
         <div>
-          <label htmlFor="email" className="text-sm font-medium">Email</label>
-          <input id="email" className="input mt-1" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <label htmlFor="email" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+            Email address
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="h-5 w-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+              className="input pl-10"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
         </div>
 
+        {/* Password */}
         <div>
-          <label htmlFor="password" className="text-sm font-medium">Password</label>
-          <input id="password" className="input mt-1" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          <div className="flex items-center justify-between mb-1.5">
+            <label htmlFor="password" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              Password
+            </label>
+            <Link
+              href="/forgot-password"
+              className="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
+            >
+              Forgot password?
+            </Link>
+          </div>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="h-5 w-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              required
+              className="input pl-10"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
         </div>
 
-        {err && <div className="text-sm text-red-600">{err}</div>}
+        {/* Error message */}
+        {err && (
+          <div className="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-3 flex items-start gap-3">
+            <svg className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p className="text-sm text-red-700 dark:text-red-300">{err}</p>
+          </div>
+        )}
 
-        <button className="btn btn-primary w-full" disabled={loading}>
-          {loading ? "Signing in…" : "Sign in"}
+        {/* Submit */}
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+        >
+          {loading ? (
+            <>
+              <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+              Signing in...
+            </>
+          ) : (
+            "Sign in"
+          )}
         </button>
+
+        {/* Divider */}
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-zinc-200 dark:border-zinc-700" />
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-white dark:bg-zinc-900 text-zinc-500">New to JobTracker?</span>
+          </div>
+        </div>
+
+        {/* Register link */}
+        <Link
+          href="/register"
+          className="w-full flex items-center justify-center rounded-xl border-2 border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-3 text-sm font-semibold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900 transition-all"
+        >
+          Create an account
+        </Link>
       </form>
-    </div>
+    </AuthLayout>
   );
 }
