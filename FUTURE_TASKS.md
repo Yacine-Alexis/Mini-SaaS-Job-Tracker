@@ -1,7 +1,7 @@
 # Job Tracker Pro - Future Tasks Roadmap
 **Created:** February 2, 2026  
 **Last Updated:** February 2, 2026  
-**Current Status:** 527 tests passing, Grade A (94/100)
+**Current Status:** 589 tests passing, Grade A (94/100)
 
 ---
 
@@ -114,11 +114,11 @@
 
 | # | Task | Priority | Effort | Description |
 |---|------|----------|--------|-------------|
-| S1 | Add two-factor authentication | High | 8h | TOTP with authenticator apps |
-| S2 | Implement session management | High | 4h | View/revoke active sessions |
+| ~~S1~~ | ~~Add two-factor authentication~~ | ~~High~~ | ~~8h~~ | ✅ TOTP with authenticator apps |
+| ~~S2~~ | ~~Implement session management~~ | ~~High~~ | ~~4h~~ | ✅ View/revoke active sessions |
 | S3 | Add security headers audit | Medium | 2h | OWASP header checklist |
 | S4 | Rate limiting per endpoint | Medium | 3h | Granular rate limits |
-| S5 | Add login attempt throttling | High | 2h | Prevent brute force |
+| ~~S5~~ | ~~Add login attempt throttling~~ | ~~High~~ | ~~2h~~ | ✅ Prevent brute force |
 
 ---
 
@@ -189,10 +189,10 @@
 - **Goal:** Reduce code duplication by 50% ✅
 
 ### Sprint 17: Security Hardening
-- [ ] S1: Two-factor authentication
-- [ ] S5: Login attempt throttling
-- [ ] S2: Session management
-- **Goal:** Enterprise-ready auth
+- [x] S1: Two-factor authentication ✅
+- [x] S5: Login attempt throttling ✅
+- [x] S2: Session management ✅
+- **Goal:** Enterprise-ready auth ✅ (62 new tests)
 
 ### Sprint 18: Dependency Upgrades (Phase 1)
 - [ ] U5: Vitest 4
@@ -227,13 +227,14 @@
 | 14 | Warnings + ErrorBoundary | 403 | Feb 2026 |
 | 15 | Test Coverage Boost | 498 | Feb 2026 |
 | 16 | Panel Abstraction | 527 | Feb 2026 |
+| 17 | Security Hardening | 589 | Feb 2026 |
 
 ### Metrics Goals
 | Metric | Current | Target |
 |--------|---------|--------|
-| Unit Tests | 527 | 500+ ✅ |
+| Unit Tests | 589 | 500+ ✅ |
 | E2E Tests | 6 specs | 15+ specs |
-| Test Coverage | ~75% | 85%+ |
+| Test Coverage | ~78% | 85%+ |
 | Bundle Size | 87.7kB shared | <80kB |
 | Lighthouse Score | ~85 | 95+ |
 
@@ -250,4 +251,4 @@
 
 ---
 
-*Last reviewed: Sprint 16 complete*
+*Last reviewed: Sprint 17 complete*

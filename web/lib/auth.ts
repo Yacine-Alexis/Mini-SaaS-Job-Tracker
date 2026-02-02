@@ -4,12 +4,19 @@
  */
 
 import { getServerSession } from "next-auth";
-import type { NextAuthOptions } from "next-auth";
+import type { NextAuthOptions, User as NextAuthUser } from "next-auth";
 import type { JWT } from "next-auth/jwt";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 import { jsonError } from "@/lib/errors";
+import {
+  getAttemptKey,
+  checkLoginAllowed,
+  recordFailedAttempt,
+  clearLoginAttempts,
+  formatLockoutDuration,
+} from "@/lib/loginThrottle";
 import type { Plan } from "@prisma/client";
 
 // Extend JWT type to include plan
@@ -38,6 +45,20 @@ declare module "next-auth" {
 const PLAN_CACHE_TTL = 5 * 60 * 1000;
 
 /**
+ * Custom error class for throttled login attempts
+ */
+export class LoginThrottledError extends Error {
+  constructor(
+    message: string,
+    public remainingAttempts: number,
+    public lockedUntilMs: number | null
+  ) {
+    super(message);
+    this.name = "LoginThrottledError";
+  }
+}
+
+/**
  * NextAuth configuration options.
  * Uses JWT strategy with credentials provider (email/password).
  */
@@ -48,24 +69,74 @@ export const authOptions: NextAuthOptions = {
       name: "Email & Password",
       credentials: {
         email: { label: "Email", type: "text" },
-        password: { label: "Password", type: "password" }
+        password: { label: "Password", type: "password" },
+        clientIp: { label: "Client IP", type: "hidden" }
       },
-      async authorize(credentials) {
+      async authorize(credentials): Promise<NextAuthUser | null> {
         const email = credentials?.email?.toLowerCase().trim();
         const password = credentials?.password ?? "";
+        // Client IP passed from login page (extracted from headers)
+        const clientIp = credentials?.clientIp || "unknown";
 
         if (!email || !password) return null;
+
+        // Check if login is throttled
+        const attemptKey = getAttemptKey(clientIp, email);
+        const throttleStatus = checkLoginAllowed(attemptKey);
+        
+        if (!throttleStatus.allowed) {
+          const duration = formatLockoutDuration(throttleStatus.retryAfterMs || 60000);
+          throw new LoginThrottledError(
+            `Too many failed attempts. Try again in ${duration}.`,
+            0,
+            throttleStatus.lockedUntilMs
+          );
+        }
 
         // All users (including admins) are authenticated via database
         const user = await prisma.user.findFirst({
           where: { email, deletedAt: null },
           select: { id: true, email: true, passwordHash: true, plan: true }
         });
-        if (!user) return null;
+        
+        if (!user) {
+          // Record failed attempt (user not found)
+          const result = recordFailedAttempt(attemptKey, clientIp, email);
+          if (result.locked) {
+            const duration = formatLockoutDuration(result.lockoutDurationMs || 60000);
+            throw new LoginThrottledError(
+              `Too many failed attempts. Account locked for ${duration}.`,
+              0,
+              result.lockedUntilMs
+            );
+          }
+          if (result.remainingAttempts <= 2) {
+            throw new Error(`Invalid credentials. ${result.remainingAttempts} attempts remaining.`);
+          }
+          return null;
+        }
 
         const ok = await bcrypt.compare(password, user.passwordHash);
-        if (!ok) return null;
+        if (!ok) {
+          // Record failed attempt (wrong password)
+          const result = recordFailedAttempt(attemptKey, clientIp, email);
+          if (result.locked) {
+            const duration = formatLockoutDuration(result.lockoutDurationMs || 60000);
+            throw new LoginThrottledError(
+              `Too many failed attempts. Account locked for ${duration}.`,
+              0,
+              result.lockedUntilMs
+            );
+          }
+          if (result.remainingAttempts <= 2) {
+            throw new Error(`Invalid credentials. ${result.remainingAttempts} attempts remaining.`);
+          }
+          return null;
+        }
 
+        // Successful login - clear attempts
+        clearLoginAttempts(attemptKey);
+        
         return { id: user.id, email: user.email, plan: user.plan };
       }
     })
