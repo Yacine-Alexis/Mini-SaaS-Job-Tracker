@@ -87,6 +87,7 @@ model User {
   salaryOffers    SalaryOffer[]
   passwordResetTokens PasswordResetToken[]
   auditLogs       AuditLog[]
+  emailPreferences EmailPreferences?
 
   @@index([createdAt])
 }
@@ -372,6 +373,7 @@ enum AuditAction {
   OFFER_CREATED
   OFFER_UPDATED
   OFFER_DELETED
+  EMAIL_PREFERENCES_UPDATED
   EXPORT_CSV
   BILLING_UPGRADED
   BILLING_DOWNGRADED
@@ -393,4 +395,51 @@ model AuditLog {
   @@index([userId, createdAt])
   @@index([action, createdAt])
   @@index([entityId])
+}
+
+enum DigestFrequency {
+  NEVER
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+model EmailPreferences {
+  id                      String           @id @default(cuid())
+  userId                  String           @unique
+  user                    User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Interview reminders
+  interviewReminder       Boolean          @default(true)
+  interviewReminderHours  Int              @default(24)  // Hours before interview
+  
+  // Task due date reminders
+  taskReminder            Boolean          @default(true)
+  taskReminderHours       Int              @default(24)  // Hours before due
+  
+  // Follow-up reminders
+  followUpReminder        Boolean          @default(true)
+  
+  // Application status changes (future: from integrated job boards)
+  statusChangeNotify      Boolean          @default(true)
+  
+  // Digest emails
+  digestFrequency         DigestFrequency  @default(WEEKLY)
+  digestDay               Int              @default(1)   // 0=Sun, 1=Mon, ..., 6=Sat
+  digestHour              Int              @default(9)   // Hour of day (0-23)
+  
+  // Stale application alerts (no activity for X days)
+  staleAlertEnabled       Boolean          @default(true)
+  staleAlertDays          Int              @default(14)
+  
+  // Marketing/product updates
+  marketingEmails         Boolean          @default(false)
+  
+  // Global unsubscribe
+  unsubscribedAll         Boolean          @default(false)
+
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @updatedAt
+
+  @@index([userId])
 }
