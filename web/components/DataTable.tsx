@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ApplicationStage } from "@prisma/client";
 
 type Column<T> = {
@@ -23,8 +23,11 @@ export default function DataTable<T extends Record<string, any>>({
   data,
   keyField,
   linkHref,
+  onRowClick,
   emptyMessage = "No data available"
 }: Props<T>) {
+  const router = useRouter();
+
   if (data.length === 0) {
     return (
       <div className="text-center py-8 text-zinc-500 text-sm">
@@ -33,40 +36,45 @@ export default function DataTable<T extends Record<string, any>>({
     );
   }
 
+  const handleRowClick = (item: T) => {
+    if (onRowClick) {
+      onRowClick(item);
+    } else if (linkHref) {
+      router.push(linkHref(item));
+    }
+  };
+
+  const isClickable = !!linkHref || !!onRowClick;
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b">
             {columns.map((col) => (
-              <th key={String(col.key)} className="text-left py-2 px-3 font-medium text-zinc-700">
+              <th key={String(col.key)} className="text-left py-2 px-3 font-medium text-zinc-700 dark:text-zinc-300">
                 {col.header}
               </th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {data.map((item) => {
-            const row = (
-              <tr key={String(item[keyField])} className="border-b hover:bg-zinc-50">
-                {columns.map((col) => (
-                  <td key={String(col.key)} className="py-2 px-3">
-                    {col.render ? col.render(item) : item[col.key as keyof T]}
-                  </td>
-                ))}
-              </tr>
-            );
-
-            if (linkHref) {
-              return (
-                <Link key={String(item[keyField])} href={linkHref(item)} className="contents">
-                  {row}
-                </Link>
-              );
-            }
-
-            return row;
-          })}
+          {data.map((item) => (
+            <tr
+              key={String(item[keyField])}
+              className={`border-b hover:bg-zinc-50 dark:hover:bg-zinc-800 ${isClickable ? "cursor-pointer" : ""}`}
+              onClick={isClickable ? () => handleRowClick(item) : undefined}
+              onKeyDown={isClickable ? (e) => e.key === "Enter" && handleRowClick(item) : undefined}
+              tabIndex={isClickable ? 0 : undefined}
+              role={isClickable ? "button" : undefined}
+            >
+              {columns.map((col) => (
+                <td key={String(col.key)} className="py-2 px-3">
+                  {col.render ? col.render(item) : item[col.key as keyof T]}
+                </td>
+              ))}
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>

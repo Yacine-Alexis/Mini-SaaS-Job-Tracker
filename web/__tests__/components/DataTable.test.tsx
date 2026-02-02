@@ -3,10 +3,17 @@
  */
 
 import React from 'react';
-import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
 import DataTable, { StageBadge } from '@/components/DataTable';
 import { ApplicationStage } from '@prisma/client';
+
+// Mock next/navigation
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+  }),
+}));
 
 // Sample data type for testing
 type TestItem = {
@@ -86,8 +93,8 @@ describe('DataTable', () => {
     });
   });
 
-  describe('link support', () => {
-    it('wraps rows in links when linkHref is provided', () => {
+  describe('clickable rows', () => {
+    it('makes rows clickable when linkHref is provided', () => {
       const { container } = render(
         <DataTable 
           columns={columns} 
@@ -96,8 +103,43 @@ describe('DataTable', () => {
           linkHref={(item) => `/items/${item.id}`}
         />
       );
-      const links = container.querySelectorAll('a');
-      expect(links).toHaveLength(3);
+      const rows = container.querySelectorAll('tbody tr');
+      expect(rows).toHaveLength(3);
+      rows.forEach((row) => {
+        expect(row).toHaveClass('cursor-pointer');
+        expect(row).toHaveAttribute('role', 'button');
+        expect(row).toHaveAttribute('tabIndex', '0');
+      });
+    });
+
+    it('calls onRowClick when row is clicked', () => {
+      const handleClick = vi.fn();
+      render(
+        <DataTable 
+          columns={columns} 
+          data={testData} 
+          keyField="id"
+          onRowClick={handleClick}
+        />
+      );
+      const firstRow = screen.getByText('Item 1').closest('tr');
+      fireEvent.click(firstRow!);
+      expect(handleClick).toHaveBeenCalledWith(testData[0]);
+    });
+
+    it('supports keyboard navigation with Enter key', () => {
+      const handleClick = vi.fn();
+      render(
+        <DataTable 
+          columns={columns} 
+          data={testData} 
+          keyField="id"
+          onRowClick={handleClick}
+        />
+      );
+      const firstRow = screen.getByText('Item 1').closest('tr');
+      fireEvent.keyDown(firstRow!, { key: 'Enter' });
+      expect(handleClick).toHaveBeenCalledWith(testData[0]);
     });
   });
 });

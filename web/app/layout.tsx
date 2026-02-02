@@ -9,10 +9,6 @@ export const metadata = {
   keywords: ["job tracker", "job applications", "career", "job search", "application tracker"],
   authors: [{ name: "JobTracker" }],
   manifest: "/manifest.json",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#18181b" }
-  ],
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
