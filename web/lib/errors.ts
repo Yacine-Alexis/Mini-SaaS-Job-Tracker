@@ -13,7 +13,8 @@ export type ApiErrorCode =
   | "NOT_CONFIGURED"
   | "PLAN_LIMIT"
   | "PLAN_REQUIRED"
-  | "INVALID_CREDENTIALS";
+  | "INVALID_CREDENTIALS"
+  | "DUPLICATE";
 
 export interface ApiError {
   error: {
