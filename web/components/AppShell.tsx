@@ -7,6 +7,7 @@ import { signOut, useSession } from "next-auth/react";
 import UserPlanBadge from "@/components/UserPlanBadge";
 import DarkModeToggle from "@/components/DarkModeToggle";
 import Avatar from "@/components/ui/Avatar";
+import MobileBottomNav from "@/components/MobileBottomNav";
 
 const mainNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: DashboardIcon },
@@ -295,10 +296,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </header>
 
       {/* Main Content */}
-      <main className="mx-auto max-w-7xl px-4 py-6">{children}</main>
+      <main className="mx-auto max-w-7xl px-4 py-6 pb-24 md:pb-6">{children}</main>
 
-      {/* Footer */}
-      <footer className="border-t border-zinc-200 dark:border-zinc-800 mt-auto">
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav />
+
+      {/* Footer - Hidden on mobile due to bottom nav */}
+      <footer className="hidden md:block border-t border-zinc-200 dark:border-zinc-800 mt-auto">
         <div className="mx-auto max-w-7xl px-4 py-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-zinc-500 dark:text-zinc-400">
             <div className="flex items-center gap-2">
