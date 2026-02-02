@@ -84,6 +84,7 @@ model User {
   interviews      Interview[]
   documents       Document[]
   labels          Label[]
+  salaryOffers    SalaryOffer[]
   passwordResetTokens PasswordResetToken[]
   auditLogs       AuditLog[]
 
@@ -125,6 +126,7 @@ model JobApplication {
   attachmentLinks AttachmentLink[]
   interviews      Interview[]
   documents       Document[]
+  salaryOffers    SalaryOffer[]
 
   @@index([userId, stage])
   @@index([userId, company])
@@ -274,6 +276,41 @@ model Document {
   @@index([userId, isDefault])
 }
 
+// Salary offers and negotiation history
+enum OfferType {
+  INITIAL_OFFER     // Company's first offer
+  COUNTER_OFFER     // Your counter-offer
+  REVISED_OFFER     // Company's revised offer
+  FINAL_OFFER       // Final accepted/declined offer
+}
+
+model SalaryOffer {
+  id             String         @id @default(cuid())
+  userId         String
+  applicationId  String
+
+  user           User           @relation(fields: [userId], references: [id], onDelete: Restrict)
+  application    JobApplication @relation(fields: [applicationId], references: [id], onDelete: Restrict)
+
+  type           OfferType      @default(INITIAL_OFFER)
+  baseSalary     Int            // Annual base salary
+  bonus          Int?           // Annual bonus (if any)
+  equity         String?        // Equity/stock details (e.g., "10,000 RSUs over 4 years")
+  signingBonus   Int?           // One-time signing bonus
+  benefits       String?        // Benefits summary
+  notes          String?        // Additional notes about this offer
+  offerDate      DateTime       @default(now()) // When the offer was made/given
+  isAccepted     Boolean?       // null = pending, true = accepted, false = declined
+  currency       String         @default("USD")
+
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  deletedAt      DateTime?
+
+  @@index([userId, applicationId])
+  @@index([userId, deletedAt])
+}
+
 // Custom labels with colors for organizing applications
 model Label {
   id        String    @id @default(cuid())
@@ -332,6 +369,9 @@ enum AuditAction {
   LABEL_CREATED
   LABEL_UPDATED
   LABEL_DELETED
+  OFFER_CREATED
+  OFFER_UPDATED
+  OFFER_DELETED
   EXPORT_CSV
   BILLING_UPGRADED
   BILLING_DOWNGRADED
