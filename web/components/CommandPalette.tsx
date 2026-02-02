@@ -3,6 +3,18 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useKeyboardShortcut, KeyboardShortcutHint } from "@/lib/useKeyboardShortcuts";
+import {
+  PlusIcon,
+  HomeIcon,
+  BriefcaseIcon,
+  UploadIcon,
+  SettingsIcon,
+  BillingIcon,
+  MoonIcon,
+  SunIcon,
+  SearchIcon,
+  LogoutIcon,
+} from "@/components/icons";
 
 interface CommandItem {
   id: string;
@@ -18,61 +30,6 @@ interface CommandItem {
 interface CommandPaletteProps {
   additionalCommands?: CommandItem[];
 }
-
-// Icons
-const icons = {
-  plus: (
-    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-    </svg>
-  ),
-  home: (
-    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-    </svg>
-  ),
-  briefcase: (
-    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-    </svg>
-  ),
-  upload: (
-    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-    </svg>
-  ),
-  settings: (
-    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-    </svg>
-  ),
-  credit: (
-    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-    </svg>
-  ),
-  moon: (
-    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-    </svg>
-  ),
-  sun: (
-    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-    </svg>
-  ),
-  search: (
-    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-    </svg>
-  ),
-  logout: (
-    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-    </svg>
-  ),
-};
 
 export default function CommandPalette({ additionalCommands = [] }: CommandPaletteProps) {
   const [open, setOpen] = useState(false);
@@ -95,7 +52,7 @@ export default function CommandPalette({ additionalCommands = [] }: CommandPalet
       id: "new-application",
       label: "New Application",
       description: "Create a new job application",
-      icon: icons.plus,
+      icon: <PlusIcon className="h-4 w-4" />,
       shortcut: "N",
       action: () => router.push("/applications/new"),
       category: "Actions",
@@ -105,7 +62,7 @@ export default function CommandPalette({ additionalCommands = [] }: CommandPalet
       id: "go-dashboard",
       label: "Go to Dashboard",
       description: "View your dashboard",
-      icon: icons.home,
+      icon: <HomeIcon className="h-4 w-4" />,
       shortcut: "G D",
       action: () => router.push("/dashboard"),
       category: "Navigation",
@@ -115,7 +72,7 @@ export default function CommandPalette({ additionalCommands = [] }: CommandPalet
       id: "go-applications",
       label: "Go to Applications",
       description: "View all applications",
-      icon: icons.briefcase,
+      icon: <BriefcaseIcon className="h-4 w-4" />,
       shortcut: "G A",
       action: () => router.push("/applications"),
       category: "Navigation",
@@ -125,7 +82,7 @@ export default function CommandPalette({ additionalCommands = [] }: CommandPalet
       id: "go-import",
       label: "Import Applications",
       description: "Import from CSV file",
-      icon: icons.upload,
+      icon: <UploadIcon className="h-4 w-4" />,
       action: () => router.push("/applications/import"),
       category: "Actions",
       keywords: ["csv", "upload", "bulk"],
@@ -134,7 +91,7 @@ export default function CommandPalette({ additionalCommands = [] }: CommandPalet
       id: "go-settings",
       label: "Go to Settings",
       description: "Account settings",
-      icon: icons.settings,
+      icon: <SettingsIcon className="h-4 w-4" />,
       shortcut: "G S",
       action: () => router.push("/settings/account"),
       category: "Navigation",
@@ -144,7 +101,7 @@ export default function CommandPalette({ additionalCommands = [] }: CommandPalet
       id: "go-billing",
       label: "Go to Billing",
       description: "Manage subscription",
-      icon: icons.credit,
+      icon: <BillingIcon className="h-4 w-4" />,
       action: () => router.push("/settings/billing"),
       category: "Navigation",
       keywords: ["subscription", "plan", "upgrade", "pro"],
@@ -153,7 +110,7 @@ export default function CommandPalette({ additionalCommands = [] }: CommandPalet
       id: "toggle-dark-mode",
       label: "Toggle Dark Mode",
       description: "Switch between light and dark theme",
-      icon: icons.moon,
+      icon: <MoonIcon className="h-4 w-4" />,
       action: toggleDarkMode,
       category: "Preferences",
       keywords: ["theme", "light", "dark", "appearance"],
@@ -295,9 +252,7 @@ export default function CommandPalette({ additionalCommands = [] }: CommandPalet
         >
           {/* Search Input */}
           <div className="flex items-center gap-3 px-4 border-b border-zinc-200 dark:border-zinc-700">
-            <svg className="h-5 w-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+            <SearchIcon className="h-5 w-5 text-zinc-400" />
             <input
               ref={inputRef}
               type="text"
