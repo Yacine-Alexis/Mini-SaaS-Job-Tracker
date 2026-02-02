@@ -1,0 +1,1195 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Job Tracker API",
+    "description": "REST API for the Mini-SaaS Job Application Tracker. Manage job applications, notes, tasks, contacts, and more.\n\n## Authentication\nAll endpoints require authentication via NextAuth JWT session. Include the session cookie in requests.\n\n## Multi-tenant Data Isolation\nAll queries are automatically scoped to the authenticated user. Users can only access their own data.\n\n## Soft Deletes\nRecords are soft-deleted (marked with `deletedAt` timestamp) rather than permanently removed.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "API Support"
+    },
+    "license": {
+      "name": "MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000/api",
+      "description": "Development server"
+    }
+  ],
+  "tags": [
+    { "name": "Applications", "description": "Job application CRUD operations" },
+    { "name": "Notes", "description": "Notes attached to applications" },
+    { "name": "Tasks", "description": "Tasks/todos for applications" },
+    { "name": "Contacts", "description": "Contacts related to applications" },
+    { "name": "Attachment Links", "description": "External links attached to applications" },
+    { "name": "Dashboard", "description": "Dashboard statistics" },
+    { "name": "Auth", "description": "Authentication endpoints" },
+    { "name": "Account", "description": "Account management" },
+    { "name": "Billing", "description": "Billing and subscription management" }
+  ],
+  "paths": {
+    "/applications": {
+      "get": {
+        "tags": ["Applications"],
+        "summary": "List applications",
+        "description": "Get a paginated list of job applications for the authenticated user",
+        "parameters": [
+          { "$ref": "#/components/parameters/PageParam" },
+          { "$ref": "#/components/parameters/LimitParam" },
+          { "$ref": "#/components/parameters/SortByParam" },
+          { "$ref": "#/components/parameters/SortOrderParam" },
+          {
+            "name": "stage",
+            "in": "query",
+            "schema": { "$ref": "#/components/schemas/ApplicationStage" },
+            "description": "Filter by application stage"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Search in company name and job title"
+          },
+          {
+            "name": "tags",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Comma-separated tags to filter by"
+          },
+          {
+            "name": "dateFrom",
+            "in": "query",
+            "schema": { "type": "string", "format": "date" },
+            "description": "Filter applications created after this date"
+          },
+          {
+            "name": "dateTo",
+            "in": "query",
+            "schema": { "type": "string", "format": "date" },
+            "description": "Filter applications created before this date"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/JobApplication" }
+                    },
+                    "total": { "type": "integer" },
+                    "page": { "type": "integer" },
+                    "limit": { "type": "integer" },
+                    "totalPages": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "post": {
+        "tags": ["Applications"],
+        "summary": "Create application",
+        "description": "Create a new job application. Free plan users are limited to 200 applications.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateApplication" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Application created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "item": { "$ref": "#/components/schemas/JobApplication" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/PlanLimit" }
+        }
+      }
+    },
+    "/applications/{id}": {
+      "get": {
+        "tags": ["Applications"],
+        "summary": "Get application",
+        "description": "Get a single job application by ID",
+        "parameters": [
+          { "$ref": "#/components/parameters/ApplicationId" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "item": { "$ref": "#/components/schemas/JobApplicationWithRelations" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "patch": {
+        "tags": ["Applications"],
+        "summary": "Update application",
+        "description": "Update an existing job application",
+        "parameters": [
+          { "$ref": "#/components/parameters/ApplicationId" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateApplication" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Application updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "item": { "$ref": "#/components/schemas/JobApplication" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Applications"],
+        "summary": "Delete application",
+        "description": "Soft delete an application and all related records (notes, tasks, contacts, links)",
+        "parameters": [
+          { "$ref": "#/components/parameters/ApplicationId" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Application deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/applications/export": {
+      "get": {
+        "tags": ["Applications"],
+        "summary": "Export applications (Pro only)",
+        "description": "Export all applications as CSV. Requires Pro plan.",
+        "responses": {
+          "200": {
+            "description": "CSV file",
+            "content": {
+              "text/csv": {
+                "schema": { "type": "string" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/ProRequired" }
+        }
+      }
+    },
+    "/notes": {
+      "get": {
+        "tags": ["Notes"],
+        "summary": "List notes",
+        "description": "Get notes for an application",
+        "parameters": [
+          {
+            "name": "applicationId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Application ID to get notes for"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Note" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "post": {
+        "tags": ["Notes"],
+        "summary": "Create note",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateNote" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Note created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "item": { "$ref": "#/components/schemas/Note" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "patch": {
+        "tags": ["Notes"],
+        "summary": "Update note",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateNote" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Note updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "item": { "$ref": "#/components/schemas/Note" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Notes"],
+        "summary": "Delete note",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Note deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/tasks": {
+      "get": {
+        "tags": ["Tasks"],
+        "summary": "List tasks",
+        "parameters": [
+          {
+            "name": "applicationId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Task" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "post": {
+        "tags": ["Tasks"],
+        "summary": "Create task",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateTask" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Task created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "item": { "$ref": "#/components/schemas/Task" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "patch": {
+        "tags": ["Tasks"],
+        "summary": "Update task",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateTask" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Task updated"
+          },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Tasks"],
+        "summary": "Delete task",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Task deleted" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/contacts": {
+      "get": {
+        "tags": ["Contacts"],
+        "summary": "List contacts",
+        "parameters": [
+          {
+            "name": "applicationId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Contact" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "post": {
+        "tags": ["Contacts"],
+        "summary": "Create contact",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateContact" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Contact created" },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "patch": {
+        "tags": ["Contacts"],
+        "summary": "Update contact",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateContact" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Contact updated" },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Contacts"],
+        "summary": "Delete contact",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Contact deleted" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/attachment-links": {
+      "get": {
+        "tags": ["Attachment Links"],
+        "summary": "List attachment links",
+        "parameters": [
+          {
+            "name": "applicationId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/AttachmentLink" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "post": {
+        "tags": ["Attachment Links"],
+        "summary": "Create attachment link",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateAttachmentLink" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Link created" },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "patch": {
+        "tags": ["Attachment Links"],
+        "summary": "Update attachment link",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateAttachmentLink" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Link updated" },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Attachment Links"],
+        "summary": "Delete attachment link",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Link deleted" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/dashboard": {
+      "get": {
+        "tags": ["Dashboard"],
+        "summary": "Get dashboard stats",
+        "description": "Get aggregated statistics for the dashboard",
+        "responses": {
+          "200": {
+            "description": "Dashboard statistics",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DashboardStats" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/me": {
+      "get": {
+        "tags": ["Account"],
+        "summary": "Get current user",
+        "description": "Get the currently authenticated user's information",
+        "responses": {
+          "200": {
+            "description": "User information",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/User" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Register new user",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": { "type": "string", "format": "email" },
+                  "password": { "type": "string", "minLength": 8 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "User registered successfully" },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "409": {
+            "description": "Email already exists",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/forgot": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Request password reset",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email"],
+                "properties": {
+                  "email": { "type": "string", "format": "email" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Reset email sent if account exists" }
+        }
+      }
+    },
+    "/account/change-password": {
+      "post": {
+        "tags": ["Account"],
+        "summary": "Change password",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["currentPassword", "newPassword"],
+                "properties": {
+                  "currentPassword": { "type": "string" },
+                  "newPassword": { "type": "string", "minLength": 8 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Password changed successfully" },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/account/delete": {
+      "delete": {
+        "tags": ["Account"],
+        "summary": "Delete account",
+        "description": "Permanently delete the user's account and all associated data",
+        "responses": {
+          "200": { "description": "Account deleted" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/billing/create-checkout-session": {
+      "post": {
+        "tags": ["Billing"],
+        "summary": "Create Stripe checkout session",
+        "description": "Create a Stripe checkout session for upgrading to Pro plan",
+        "responses": {
+          "200": {
+            "description": "Checkout session created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "url": { "type": "string", "format": "uri" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ApplicationStage": {
+        "type": "string",
+        "enum": ["SAVED", "APPLIED", "INTERVIEW", "OFFER", "REJECTED"]
+      },
+      "TaskStatus": {
+        "type": "string",
+        "enum": ["OPEN", "DONE"]
+      },
+      "Plan": {
+        "type": "string",
+        "enum": ["FREE", "PRO"]
+      },
+      "JobApplication": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "company": { "type": "string" },
+          "title": { "type": "string" },
+          "location": { "type": "string", "nullable": true },
+          "url": { "type": "string", "nullable": true },
+          "salaryMin": { "type": "integer", "nullable": true },
+          "salaryMax": { "type": "integer", "nullable": true },
+          "stage": { "$ref": "#/components/schemas/ApplicationStage" },
+          "source": { "type": "string", "nullable": true },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "appliedAt": { "type": "string", "format": "date-time", "nullable": true },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "JobApplicationWithRelations": {
+        "allOf": [
+          { "$ref": "#/components/schemas/JobApplication" },
+          {
+            "type": "object",
+            "properties": {
+              "notes": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/Note" }
+              },
+              "tasks": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/Task" }
+              },
+              "contacts": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/Contact" }
+              },
+              "attachmentLinks": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/AttachmentLink" }
+              }
+            }
+          }
+        ]
+      },
+      "CreateApplication": {
+        "type": "object",
+        "required": ["company", "title"],
+        "properties": {
+          "company": { "type": "string", "minLength": 1, "maxLength": 255 },
+          "title": { "type": "string", "minLength": 1, "maxLength": 255 },
+          "location": { "type": "string", "maxLength": 255 },
+          "url": { "type": "string", "format": "uri" },
+          "salaryMin": { "type": "integer", "minimum": 0 },
+          "salaryMax": { "type": "integer", "minimum": 0 },
+          "stage": { "$ref": "#/components/schemas/ApplicationStage" },
+          "source": { "type": "string", "maxLength": 255 },
+          "tags": { "type": "string", "description": "Comma-separated tags" }
+        }
+      },
+      "UpdateApplication": {
+        "type": "object",
+        "properties": {
+          "company": { "type": "string", "minLength": 1, "maxLength": 255 },
+          "title": { "type": "string", "minLength": 1, "maxLength": 255 },
+          "location": { "type": "string", "maxLength": 255 },
+          "url": { "type": "string", "format": "uri" },
+          "salaryMin": { "type": "integer", "minimum": 0 },
+          "salaryMax": { "type": "integer", "minimum": 0 },
+          "stage": { "$ref": "#/components/schemas/ApplicationStage" },
+          "source": { "type": "string", "maxLength": 255 },
+          "tags": { "type": "string" },
+          "appliedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Note": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "applicationId": { "type": "string" },
+          "content": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CreateNote": {
+        "type": "object",
+        "required": ["applicationId", "content"],
+        "properties": {
+          "applicationId": { "type": "string" },
+          "content": { "type": "string", "minLength": 1 }
+        }
+      },
+      "UpdateNote": {
+        "type": "object",
+        "properties": {
+          "content": { "type": "string", "minLength": 1 }
+        }
+      },
+      "Task": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "applicationId": { "type": "string" },
+          "title": { "type": "string" },
+          "status": { "$ref": "#/components/schemas/TaskStatus" },
+          "dueDate": { "type": "string", "format": "date-time", "nullable": true },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CreateTask": {
+        "type": "object",
+        "required": ["applicationId", "title"],
+        "properties": {
+          "applicationId": { "type": "string" },
+          "title": { "type": "string", "minLength": 1, "maxLength": 255 },
+          "dueDate": { "type": "string", "format": "date-time" }
+        }
+      },
+      "UpdateTask": {
+        "type": "object",
+        "properties": {
+          "title": { "type": "string", "minLength": 1, "maxLength": 255 },
+          "status": { "$ref": "#/components/schemas/TaskStatus" },
+          "dueDate": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Contact": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "applicationId": { "type": "string" },
+          "name": { "type": "string" },
+          "role": { "type": "string", "nullable": true },
+          "email": { "type": "string", "nullable": true },
+          "phone": { "type": "string", "nullable": true },
+          "notes": { "type": "string", "nullable": true },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CreateContact": {
+        "type": "object",
+        "required": ["applicationId", "name"],
+        "properties": {
+          "applicationId": { "type": "string" },
+          "name": { "type": "string", "minLength": 1, "maxLength": 255 },
+          "role": { "type": "string", "maxLength": 255 },
+          "email": { "type": "string", "format": "email" },
+          "phone": { "type": "string", "maxLength": 50 },
+          "notes": { "type": "string" }
+        }
+      },
+      "UpdateContact": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 255 },
+          "role": { "type": "string", "maxLength": 255 },
+          "email": { "type": "string", "format": "email" },
+          "phone": { "type": "string", "maxLength": 50 },
+          "notes": { "type": "string" }
+        }
+      },
+      "AttachmentLink": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "applicationId": { "type": "string" },
+          "label": { "type": "string" },
+          "url": { "type": "string", "format": "uri" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CreateAttachmentLink": {
+        "type": "object",
+        "required": ["applicationId", "label", "url"],
+        "properties": {
+          "applicationId": { "type": "string" },
+          "label": { "type": "string", "minLength": 1, "maxLength": 255 },
+          "url": { "type": "string", "format": "uri" }
+        }
+      },
+      "UpdateAttachmentLink": {
+        "type": "object",
+        "properties": {
+          "label": { "type": "string", "minLength": 1, "maxLength": 255 },
+          "url": { "type": "string", "format": "uri" }
+        }
+      },
+      "DashboardStats": {
+        "type": "object",
+        "properties": {
+          "total": { "type": "integer" },
+          "byStage": {
+            "type": "object",
+            "properties": {
+              "SAVED": { "type": "integer" },
+              "APPLIED": { "type": "integer" },
+              "INTERVIEW": { "type": "integer" },
+              "OFFER": { "type": "integer" },
+              "REJECTED": { "type": "integer" }
+            }
+          },
+          "thisWeek": { "type": "integer" },
+          "lastWeek": { "type": "integer" },
+          "weeklyActivity": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": { "type": "string" },
+                "count": { "type": "integer" }
+              }
+            }
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "plan": { "$ref": "#/components/schemas/Plan" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": { "type": "string" },
+              "message": { "type": "string" },
+              "details": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "field": { "type": "string" },
+                    "message": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "ApplicationId": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "schema": { "type": "string" },
+        "description": "Application ID"
+      },
+      "PageParam": {
+        "name": "page",
+        "in": "query",
+        "schema": { "type": "integer", "default": 1, "minimum": 1 },
+        "description": "Page number"
+      },
+      "LimitParam": {
+        "name": "limit",
+        "in": "query",
+        "schema": { "type": "integer", "default": 20, "minimum": 1, "maximum": 100 },
+        "description": "Items per page"
+      },
+      "SortByParam": {
+        "name": "sortBy",
+        "in": "query",
+        "schema": { "type": "string", "default": "updatedAt" },
+        "description": "Field to sort by"
+      },
+      "SortOrderParam": {
+        "name": "sortOrder",
+        "in": "query",
+        "schema": { "type": "string", "enum": ["asc", "desc"], "default": "desc" },
+        "description": "Sort order"
+      }
+    },
+    "responses": {
+      "Unauthorized": {
+        "description": "Not authenticated",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" },
+            "example": {
+              "error": {
+                "code": "UNAUTHORIZED",
+                "message": "Authentication required"
+              }
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Resource not found",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" },
+            "example": {
+              "error": {
+                "code": "NOT_FOUND",
+                "message": "Resource not found"
+              }
+            }
+          }
+        }
+      },
+      "ValidationError": {
+        "description": "Validation error",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" },
+            "example": {
+              "error": {
+                "code": "VALIDATION_ERROR",
+                "message": "Invalid input",
+                "details": [
+                  { "field": "company", "message": "Company is required" }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "PlanLimit": {
+        "description": "Plan limit reached",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" },
+            "example": {
+              "error": {
+                "code": "PLAN_LIMIT",
+                "message": "Free plan limit reached (200). Upgrade to Pro."
+              }
+            }
+          }
+        }
+      },
+      "ProRequired": {
+        "description": "Pro plan required",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" },
+            "example": {
+              "error": {
+                "code": "PRO_REQUIRED",
+                "message": "This feature requires a Pro plan"
+              }
+            }
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "sessionAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "next-auth.session-token",
+        "description": "NextAuth session cookie"
+      }
+    }
+  },
+  "security": [
+    { "sessionAuth": [] }
+  ]
+}
