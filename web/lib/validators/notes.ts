@@ -8,3 +8,8 @@ export const noteCreateSchema = z.object({
 export const noteUpdateSchema = z.object({
   content: z.string().min(1).max(5000)
 });
+
+/** Inferred type for creating a note */
+export type NoteCreate = z.infer<typeof noteCreateSchema>;
+/** Inferred type for updating a note */
+export type NoteUpdate = z.infer<typeof noteUpdateSchema>;

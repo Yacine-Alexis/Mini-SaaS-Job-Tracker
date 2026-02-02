@@ -16,3 +16,8 @@ export const contactUpdateSchema = z.object({
   role: z.string().max(120).optional().nullable(),
   company: z.string().max(120).optional().nullable()
 });
+
+/** Inferred type for creating a contact */
+export type ContactCreate = z.infer<typeof contactCreateSchema>;
+/** Inferred type for updating a contact */
+export type ContactUpdate = z.infer<typeof contactUpdateSchema>;

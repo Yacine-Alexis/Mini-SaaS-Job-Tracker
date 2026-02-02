@@ -13,3 +13,8 @@ export const taskUpdateSchema = z.object({
   dueDate: z.string().datetime().optional().nullable(),
   status: z.nativeEnum(TaskStatus).optional()
 });
+
+/** Inferred type for creating a task */
+export type TaskCreate = z.infer<typeof taskCreateSchema>;
+/** Inferred type for updating a task */
+export type TaskUpdate = z.infer<typeof taskUpdateSchema>;
