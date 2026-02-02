@@ -4,6 +4,7 @@ import { requireUserOr401 } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { jsonError } from "@/lib/errors";
 import { enforceRateLimitAsync } from "@/lib/rateLimit";
+import { withStripeRetry } from "@/lib/retry";
 
 export async function POST(req: NextRequest) {
   // Rate limit: 5 checkout attempts per minute per IP
@@ -21,24 +22,34 @@ export async function POST(req: NextRequest) {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) return jsonError(404, "NOT_FOUND", "User not found");
 
-  const customer =
-    user.stripeCustomerId
-      ? await stripe.customers.retrieve(user.stripeCustomerId)
-      : await stripe.customers.create({ email: user.email });
+  // Retrieve or create Stripe customer with retry
+  const customer = user.stripeCustomerId
+    ? await withStripeRetry(
+        () => stripe.customers.retrieve(user.stripeCustomerId!),
+        "retrieve-customer"
+      )
+    : await withStripeRetry(
+        () => stripe.customers.create({ email: user.email }),
+        "create-customer"
+      );
 
-  const customerId = (customer as any).id as string;
+  const customerId = (customer as { id: string }).id;
 
   if (!user.stripeCustomerId) {
     await prisma.user.update({ where: { id: userId }, data: { stripeCustomerId: customerId } });
   }
 
-  const session = await stripe.checkout.sessions.create({
-    mode: "subscription",
-    customer: customerId,
-    line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${baseUrl}/settings/billing?success=1`,
-    cancel_url: `${baseUrl}/settings/billing?canceled=1`
-  });
+  // Create checkout session with retry
+  const session = await withStripeRetry(
+    () => stripe.checkout.sessions.create({
+      mode: "subscription",
+      customer: customerId,
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${baseUrl}/settings/billing?success=1`,
+      cancel_url: `${baseUrl}/settings/billing?canceled=1`
+    }),
+    "create-checkout-session"
+  );
 
   return NextResponse.json({ url: session.url });
 }

@@ -11,6 +11,7 @@ import {
   type InterviewItem,
   type DigestStats,
 } from "./emailTemplates";
+import { withEmailRetry } from "./retry";
 
 function hasSmtp(): boolean {
   return !!(process.env.SMTP_HOST && process.env.SMTP_PORT && process.env.SMTP_USER && process.env.SMTP_PASS);
@@ -40,13 +41,18 @@ async function sendEmail(to: string, template: EmailTemplate): Promise<void> {
   }
 
   const transporter = createTransporter();
-  await transporter.sendMail({
-    from,
-    to,
-    subject: template.subject,
-    text: template.text,
-    html: template.html
-  });
+  
+  // Use retry for SMTP sending
+  await withEmailRetry(
+    () => transporter.sendMail({
+      from,
+      to,
+      subject: template.subject,
+      text: template.text,
+      html: template.html
+    }),
+    `send-email-to-${to.split("@")[0]}` // Don't log full email
+  );
 }
 
 export async function sendPasswordResetEmail(opts: { to: string; resetUrl: string }): Promise<void> {
