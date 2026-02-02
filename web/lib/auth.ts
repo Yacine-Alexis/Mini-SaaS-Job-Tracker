@@ -20,8 +20,11 @@ declare module "next-auth/jwt" {
   }
 }
 
-// Extend Session type to include plan
+// Extend User type from authorize() to include plan
 declare module "next-auth" {
+  interface User {
+    plan?: Plan;
+  }
   interface Session {
     user: {
       id: string;
@@ -72,7 +75,7 @@ export const authOptions: NextAuthOptions = {
       // On initial sign in, store plan from user object
       if (user) {
         token.sub = user.id;
-        token.plan = (user as any).plan;
+        token.plan = user.plan;
         token.planUpdatedAt = Date.now();
       }
       

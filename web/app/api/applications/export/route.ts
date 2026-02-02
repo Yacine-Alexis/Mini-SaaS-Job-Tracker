@@ -5,7 +5,7 @@ import { jsonError, zodToDetails } from "@/lib/errors";
 import { applicationListQuerySchema } from "@/lib/validators/applications";
 import { isPro } from "@/lib/plan";
 import { audit } from "@/lib/audit";
-import { AuditAction } from "@prisma/client";
+import { AuditAction, Prisma } from "@prisma/client";
 
 
 function csvEscape(value: unknown) {
@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
   const { stage, q, tags, from, to } = qParsed.data;
   const tagList = tags?.split(",").map((t) => t.trim()).filter(Boolean) ?? [];
 
-  const where: any = { userId, deletedAt: null };
+  const where: Prisma.JobApplicationWhereInput = { userId, deletedAt: null };
   if (stage) where.stage = stage;
 
   if (q) {

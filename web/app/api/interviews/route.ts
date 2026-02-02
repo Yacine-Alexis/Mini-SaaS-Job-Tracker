@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { jsonError, zodToDetails } from "@/lib/errors";
 import { requireUserOr401 } from "@/lib/auth";
 import { interviewCreateSchema, interviewUpdateSchema, interviewListQuerySchema } from "@/lib/validators/interviews";
-import { AuditAction } from "@prisma/client";
+import { AuditAction, Prisma } from "@prisma/client";
 import { audit } from "@/lib/audit";
 
 export async function GET(req: NextRequest) {
@@ -23,8 +23,8 @@ export async function GET(req: NextRequest) {
 
   const { applicationId, upcoming, result } = parsed.data;
 
-  // Build where clause
-  const where: any = { userId, deletedAt: null };
+  // Build where clause with proper Prisma typing
+  const where: Prisma.InterviewWhereInput = { userId, deletedAt: null };
   
   if (applicationId) {
     // Verify application belongs to user

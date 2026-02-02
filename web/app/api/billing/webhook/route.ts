@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { AuditAction } from "@prisma/client";
 import { audit } from "@/lib/audit";
 import { logger, getRequestId } from "@/lib/logger";
+import type Stripe from "stripe";
 
 export async function POST(req: NextRequest) {
   const requestId = getRequestId(req);
@@ -36,9 +37,9 @@ export async function POST(req: NextRequest) {
 
   // Minimal subscription -> PRO toggle
   if (event.type === "checkout.session.completed") {
-    const session = event.data.object as any;
+    const session = event.data.object as Stripe.Checkout.Session;
     const customerId = session.customer as string;
-    const subscriptionId = session.subscription as string | undefined;
+    const subscriptionId = session.subscription as string | null;
 
     const user = await prisma.user.findFirst({ where: { stripeCustomerId: customerId } });
     if (user) {
@@ -57,7 +58,7 @@ export async function POST(req: NextRequest) {
     }
   }
   if (event.type === "customer.subscription.deleted") {
-    const sub = event.data.object as any;
+    const sub = event.data.object as Stripe.Subscription;
     const customerId = sub.customer as string;
 
     const user = await prisma.user.findFirst({ where: { stripeCustomerId: customerId } });
