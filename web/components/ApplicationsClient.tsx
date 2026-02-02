@@ -190,21 +190,20 @@ export default function ApplicationsClient() {
     }
   }
 
-  // Batch delete
+  // Batch delete - parallel requests with Promise.allSettled for resilience
   async function handleBatchDelete() {
     setBatchDeleting(true);
-    let successCount = 0;
-    let failCount = 0;
 
-    for (const id of selectedIds) {
-      try {
+    const results = await Promise.allSettled(
+      Array.from(selectedIds).map(async (id) => {
         const res = await fetch(`/api/applications/${id}`, { method: "DELETE" });
-        if (res.ok) successCount++;
-        else failCount++;
-      } catch {
-        failCount++;
-      }
-    }
+        if (!res.ok) throw new Error(`Failed to delete ${id}`);
+        return id;
+      })
+    );
+
+    const successCount = results.filter((r) => r.status === "fulfilled").length;
+    const failCount = results.filter((r) => r.status === "rejected").length;
 
     setBatchDeleting(false);
     setDeleteModalOpen(false);
@@ -220,25 +219,24 @@ export default function ApplicationsClient() {
     await load();
   }
 
-  // Batch stage change
+  // Batch stage change - parallel requests with Promise.allSettled for resilience
   async function handleBatchStageChange(stage: ApplicationStage) {
     setBatchDeleting(true);
-    let successCount = 0;
-    let failCount = 0;
 
-    for (const id of selectedIds) {
-      try {
+    const results = await Promise.allSettled(
+      Array.from(selectedIds).map(async (id) => {
         const res = await fetch(`/api/applications/${id}`, {
           method: "PATCH",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ stage }),
         });
-        if (res.ok) successCount++;
-        else failCount++;
-      } catch {
-        failCount++;
-      }
-    }
+        if (!res.ok) throw new Error(`Failed to update ${id}`);
+        return id;
+      })
+    );
+
+    const successCount = results.filter((r) => r.status === "fulfilled").length;
+    const failCount = results.filter((r) => r.status === "rejected").length;
 
     setBatchDeleting(false);
     setBatchStageModalOpen(false);

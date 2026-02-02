@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { TaskStatus } from "@prisma/client";
 import { ConfirmModal } from "@/components/ui/Modal";
 import EmptyState from "@/components/ui/EmptyState";
@@ -44,7 +44,7 @@ export default function TasksPanel({ applicationId }: { applicationId: string })
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     setErr(null);
     try {
@@ -60,12 +60,11 @@ export default function TasksPanel({ applicationId }: { applicationId: string })
     } finally {
       setLoading(false);
     }
-  }
+  }, [applicationId]);
 
   useEffect(() => {
     void load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [applicationId]);
+  }, [load]);
 
   async function addTask() {
     if (!title.trim()) return;
@@ -159,7 +158,7 @@ export default function TasksPanel({ applicationId }: { applicationId: string })
         </button>
       </div>
 
-      {err && <div className="text-sm text-red-600">{err}</div>}
+      {err && <div role="alert" aria-live="polite" className="text-sm text-red-600">{err}</div>}
 
       {loading ? (
         <TasksSkeleton />
@@ -344,7 +343,7 @@ function TaskRow({
               <option value={TaskStatus.DONE}>Done</option>
             </select>
           </div>
-          {err && <div className="text-sm text-red-600">{err}</div>}
+          {err && <div role="alert" aria-live="polite" className="text-sm text-red-600">{err}</div>}
           <div className="flex gap-2">
             <button className="btn btn-primary" onClick={save} disabled={saving}>
               {saving ? "Saving..." : "Save"}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { ConfirmModal } from "@/components/ui/Modal";
 import EmptyState from "@/components/ui/EmptyState";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -48,7 +48,7 @@ export default function ContactsPanel({ applicationId }: { applicationId: string
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     setErr(null);
     try {
@@ -64,12 +64,11 @@ export default function ContactsPanel({ applicationId }: { applicationId: string
     } finally {
       setLoading(false);
     }
-  }
+  }, [applicationId]);
 
   useEffect(() => {
     void load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [applicationId]);
+  }, [load]);
 
   async function add() {
     if (!name.trim()) return;
@@ -143,7 +142,7 @@ export default function ContactsPanel({ applicationId }: { applicationId: string
         </button>
       </div>
 
-      {err && <div className="text-sm text-red-600">{err}</div>}
+      {err && <div role="alert" aria-live="polite" className="text-sm text-red-600">{err}</div>}
 
       {loading ? (
         <ContactsSkeleton />
@@ -270,7 +269,7 @@ function ContactRow({
             <input className="input" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone" type="tel" />
             <input className="input md:col-span-2" value={company} onChange={(e) => setCompany(e.target.value)} placeholder="Company" />
           </div>
-          {err && <div className="text-sm text-red-600">{err}</div>}
+          {err && <div role="alert" aria-live="polite" className="text-sm text-red-600">{err}</div>}
           <div className="flex gap-2">
             <button className="btn btn-primary" onClick={save} disabled={saving}>{saving ? "Saving..." : "Save"}</button>
             <button className="btn" onClick={() => { setEditing(false); setErr(null); }} disabled={saving}>Cancel</button>

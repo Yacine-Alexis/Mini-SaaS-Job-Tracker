@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { ConfirmModal } from "@/components/ui/Modal";
 import EmptyState from "@/components/ui/EmptyState";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -38,7 +38,7 @@ export default function AttachmentLinksPanel({ applicationId }: { applicationId:
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     setErr(null);
     try {
@@ -54,12 +54,11 @@ export default function AttachmentLinksPanel({ applicationId }: { applicationId:
     } finally {
       setLoading(false);
     }
-  }
+  }, [applicationId]);
 
   useEffect(() => {
     void load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [applicationId]);
+  }, [load]);
 
   async function add() {
     if (!url.trim()) return;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import NotesPanel from "@/components/NotesPanel";
 import TasksPanel from "@/components/TasksPanel";
@@ -34,7 +34,7 @@ export default function ApplicationDetailsClient({ id }: { id: string }) {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     setErr(null);
     try {
@@ -51,12 +51,11 @@ export default function ApplicationDetailsClient({ id }: { id: string }) {
     } finally {
       setLoading(false);
     }
-  }
+  }, [id]);
 
   useEffect(() => {
     void load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [load]);
 
   if (loading) return <div className="text-sm text-zinc-600">Loading…</div>;
   if (err) return <div className="text-sm text-red-600">{err}</div>;

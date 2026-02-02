@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
+import DOMPurify from "dompurify";
 
 interface RichTextEditorProps {
   value: string;
@@ -175,7 +176,7 @@ export function RichTextEditor({
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
         onPaste={handlePaste}
-        dangerouslySetInnerHTML={{ __html: value }}
+        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(value) }}
         className="p-3 outline-none overflow-y-auto prose prose-sm dark:prose-invert max-w-none"
         style={{ minHeight, maxHeight }}
         data-placeholder={placeholder}
