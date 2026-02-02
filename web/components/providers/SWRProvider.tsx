@@ -33,9 +33,13 @@ export function SWRProvider({ children }: SWRProviderProps) {
           return true;
         },
         onError: (error, key) => {
-          // Log errors in development
-          if (process.env.NODE_ENV === "development") {
-            console.error(`SWR Error [${key}]:`, error);
+          // Log errors in development, report to Sentry in production
+          if (process.env.NODE_ENV === "production") {
+            import("@sentry/nextjs").then((Sentry) => {
+              Sentry.captureException(error, { extra: { swrKey: key } });
+            });
+          } else {
+            console.error("[SWR Error]", { key, error: error?.message || error });
           }
         },
       }}

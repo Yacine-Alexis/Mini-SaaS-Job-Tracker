@@ -12,6 +12,7 @@ import {
   type DigestStats,
 } from "./emailTemplates";
 import { withEmailRetry } from "./retry";
+import { logger, generateRequestId } from "./logger";
 
 function hasSmtp(): boolean {
   return !!(process.env.SMTP_HOST && process.env.SMTP_PORT && process.env.SMTP_USER && process.env.SMTP_PASS);
@@ -34,9 +35,12 @@ async function sendEmail(to: string, template: EmailTemplate): Promise<void> {
 
   // Dev fallback: log instead of sending
   if (!hasSmtp()) {
-    console.log(`[DEV] Email to ${to}:`);
-    console.log(`  Subject: ${template.subject}`);
-    console.log(`  Text: ${template.text.slice(0, 100)}...`);
+    logger.info("Email sent (dev mode - no SMTP)", {
+      requestId: generateRequestId(),
+      to: to.split("@")[0] + "@...", // Partial email for privacy
+      subject: template.subject,
+      preview: template.text.slice(0, 100),
+    });
     return;
   }
 

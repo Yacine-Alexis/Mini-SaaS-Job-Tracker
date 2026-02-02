@@ -33,9 +33,22 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    // Log error to console in development, could send to monitoring service in production
-    console.error("[ErrorBoundary] Caught error:", error);
-    console.error("[ErrorBoundary] Component stack:", errorInfo.componentStack);
+    // Report to Sentry in production, log to console in development
+    if (typeof window !== "undefined" && process.env.NODE_ENV === "production") {
+      // Sentry.captureException is available via providers.tsx
+      import("@sentry/nextjs").then((Sentry) => {
+        Sentry.captureException(error, {
+          extra: { componentStack: errorInfo.componentStack },
+        });
+      });
+    } else {
+      // Development: structured console output
+      console.error("[ErrorBoundary]", {
+        error: error.message,
+        stack: error.stack,
+        componentStack: errorInfo.componentStack,
+      });
+    }
   }
 
   render() {
