@@ -74,16 +74,17 @@ describe("/api/salary-offers", () => {
       expect(data.items).toHaveLength(2);
     });
 
-    it("should require applicationId parameter", async () => {
+    it("should return all salary offers when no applicationId", async () => {
       vi.mocked(requireUserOr401).mockResolvedValue(mockAuthenticatedUser());
+      mockPrismaClient.salaryOffer.findMany.mockResolvedValue([]);
 
       const request = createGETRequest("/api/salary-offers");
       const response = await GET(request);
 
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(200);
     });
 
-    it("should order by offerDate ascending", async () => {
+    it("should order by offerDate descending", async () => {
       vi.mocked(requireUserOr401).mockResolvedValue(mockAuthenticatedUser());
       mockPrismaClient.salaryOffer.findMany.mockResolvedValue([]);
 
@@ -94,9 +95,11 @@ describe("/api/salary-offers", () => {
 
       expect(mockPrismaClient.salaryOffer.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          orderBy: expect.objectContaining({
-            offerDate: "asc",
-          }),
+          orderBy: expect.arrayContaining([
+            expect.objectContaining({
+              offerDate: "desc",
+            }),
+          ]),
         })
       );
     });

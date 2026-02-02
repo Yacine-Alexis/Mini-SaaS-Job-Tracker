@@ -5,6 +5,7 @@ import { AuditAction } from "@prisma/client";
 import { audit } from "@/lib/audit";
 import { prisma } from "@/lib/db";
 import { emailPreferencesUpdateSchema, DEFAULT_EMAIL_PREFERENCES } from "@/lib/validators/emailPreferences";
+import { logger, getRequestId } from "@/lib/logger";
 
 /**
  * GET /api/email-preferences
@@ -31,7 +32,11 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ preferences: prefs });
   } catch (err) {
-    console.error("GET /api/email-preferences error:", err);
+    logger.error("Failed to load email preferences", { 
+      requestId: getRequestId(req), 
+      userId,
+      error: err instanceof Error ? err.message : String(err) 
+    });
     return jsonError(500, "INTERNAL_ERROR", "Failed to load email preferences");
   }
 }
@@ -69,7 +74,11 @@ export async function PATCH(req: NextRequest) {
 
     return NextResponse.json({ preferences: prefs });
   } catch (err) {
-    console.error("PATCH /api/email-preferences error:", err);
+    logger.error("Failed to update email preferences", { 
+      requestId: getRequestId(req), 
+      userId,
+      error: err instanceof Error ? err.message : String(err) 
+    });
     return jsonError(500, "INTERNAL_ERROR", "Failed to update email preferences");
   }
 }

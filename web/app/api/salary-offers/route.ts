@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
     where: { id: data.applicationId, userId, deletedAt: null },
   });
   if (!app) {
-    return jsonError(400, "BAD_REQUEST", "Application not found");
+    return jsonError(404, "NOT_FOUND", "Application not found");
   }
 
   const offer = await prisma.salaryOffer.create({

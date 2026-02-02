@@ -62,7 +62,6 @@ describe("/api/interviews", () => {
       ];
 
       vi.mocked(requireUserOr401).mockResolvedValue(mockAuthenticatedUser());
-      mockPrismaClient.interview.count.mockResolvedValue(2);
       mockPrismaClient.interview.findMany.mockResolvedValue(mockInterviews);
 
       const request = createGETRequest("/api/interviews");
@@ -70,14 +69,15 @@ describe("/api/interviews", () => {
 
       expect(response.status).toBe(200);
 
-      const data = await parseJsonResponse<{ items: typeof mockInterviews; total: number }>(response);
+      const data = await parseJsonResponse<{ items: typeof mockInterviews }>(response);
       expect(data.items).toHaveLength(2);
-      expect(data.total).toBe(2);
     });
 
     it("should filter by applicationId", async () => {
+      const mockApp = createMockJobApplication({ userId: mockUserId, id: "app123" });
+      
       vi.mocked(requireUserOr401).mockResolvedValue(mockAuthenticatedUser());
-      mockPrismaClient.interview.count.mockResolvedValue(0);
+      mockPrismaClient.jobApplication.findFirst.mockResolvedValue(mockApp);
       mockPrismaClient.interview.findMany.mockResolvedValue([]);
 
       const request = createGETRequest("/api/interviews", {
@@ -222,9 +222,8 @@ describe("/api/interviews", () => {
       vi.mocked(requireUserOr401).mockResolvedValue(mockUnauthenticatedUser());
 
       const request = createPATCHRequest("/api/interviews", {
-        id: "int123",
         result: "PASSED",
-      });
+      }, { id: "int123" });
       const response = await PATCH(request);
 
       expect(response.status).toBe(401);
@@ -236,17 +235,21 @@ describe("/api/interviews", () => {
         id: "int123",
         result: "PENDING" as const,
       });
-      const updatedInterview = { ...existingInterview, result: "PASSED" as const, feedback: "Great interview!" };
+      const updatedInterview = { 
+        ...existingInterview, 
+        result: "PASSED" as const, 
+        feedback: "Great interview!",
+        application: { id: "app123", company: "Test Co", title: "Engineer" }
+      };
 
       vi.mocked(requireUserOr401).mockResolvedValue(mockAuthenticatedUser());
       mockPrismaClient.interview.findFirst.mockResolvedValue(existingInterview);
       mockPrismaClient.interview.update.mockResolvedValue(updatedInterview);
 
       const request = createPATCHRequest("/api/interviews", {
-        id: "int123",
         result: "PASSED",
         feedback: "Great interview!",
-      });
+      }, { id: "int123" });
       const response = await PATCH(request);
 
       expect(response.status).toBe(200);
@@ -261,9 +264,8 @@ describe("/api/interviews", () => {
       mockPrismaClient.interview.findFirst.mockResolvedValue(null);
 
       const request = createPATCHRequest("/api/interviews", {
-        id: "nonexistent",
         result: "PASSED",
-      });
+      }, { id: "nonexistent" });
       const response = await PATCH(request);
 
       expect(response.status).toBe(404);

@@ -35,6 +35,7 @@ export const mockPrismaClient = {
     findMany: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
+    updateMany: vi.fn(),
     delete: vi.fn(),
     count: vi.fn(),
   },
@@ -54,6 +55,7 @@ export const mockPrismaClient = {
     findMany: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
+    updateMany: vi.fn(),
     delete: vi.fn(),
     count: vi.fn(),
   },
@@ -63,6 +65,7 @@ export const mockPrismaClient = {
     findMany: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
+    updateMany: vi.fn(),
     delete: vi.fn(),
     count: vi.fn(),
   },
@@ -72,6 +75,7 @@ export const mockPrismaClient = {
     findMany: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
+    updateMany: vi.fn(),
     delete: vi.fn(),
     count: vi.fn(),
   },
@@ -99,6 +103,7 @@ export const mockPrismaClient = {
     findMany: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
+    updateMany: vi.fn(),
     delete: vi.fn(),
     count: vi.fn(),
   },
@@ -125,9 +130,13 @@ export const mockPrismaClient = {
   },
   $queryRaw: vi.fn(),
   $executeRaw: vi.fn(),
-  $transaction: vi.fn((callback: (tx: typeof mockPrismaClient) => Promise<unknown>) => 
-    callback(mockPrismaClient)
-  ),
+  $transaction: vi.fn((operations: unknown[] | ((tx: typeof mockPrismaClient) => Promise<unknown>)) => {
+    // Handle both array of operations and callback function
+    if (Array.isArray(operations)) {
+      return Promise.all(operations);
+    }
+    return operations(mockPrismaClient);
+  }),
 };
 
 // Reset all mocks
@@ -234,8 +243,12 @@ export function createPOSTRequest(url: string, body: unknown): NextRequest {
   return createMockRequest("POST", url, { body });
 }
 
-export function createPATCHRequest(url: string, body: unknown): NextRequest {
-  return createMockRequest("PATCH", url, { body });
+export function createPATCHRequest(
+  url: string, 
+  body: unknown,
+  searchParams: Record<string, string> = {}
+): NextRequest {
+  return createMockRequest("PATCH", url, { body, searchParams });
 }
 
 export function createDELETERequest(

@@ -27,6 +27,10 @@ vi.mock("@/lib/db", () => ({
   prisma: mockPrismaClient,
 }));
 
+vi.mock("@/lib/rateLimit", () => ({
+  enforceRateLimitAsync: vi.fn().mockResolvedValue(null),
+}));
+
 vi.mock("@/lib/auth", () => ({
   requireUserOr401: vi.fn(),
   requireUserWithPlanOr401: vi.fn(),
@@ -38,7 +42,7 @@ vi.mock("@/lib/audit", () => ({
 
 vi.mock("@/lib/plan", () => ({
   getUserPlan: vi.fn().mockResolvedValue("PRO"),
-  isPro: vi.fn().mockReturnValue(true),
+  isPro: vi.fn((plan: string | null | undefined) => plan === "PRO"),
   LIMITS: { FREE_MAX_APPLICATIONS: 200 },
 }));
 
@@ -124,7 +128,7 @@ describe("/api/applications", () => {
       mockPrismaClient.jobApplication.findMany.mockResolvedValue([]);
 
       const request = createGETRequest("/api/applications", {
-        search: "Google",
+        q: "Google",
       });
       const response = await GET(request);
 
@@ -134,7 +138,7 @@ describe("/api/applications", () => {
           where: expect.objectContaining({
             OR: expect.arrayContaining([
               expect.objectContaining({
-                company: expect.objectContaining({ contains: "Google" }),
+                company: expect.objectContaining({ contains: "Google", mode: "insensitive" }),
               }),
             ]),
           }),

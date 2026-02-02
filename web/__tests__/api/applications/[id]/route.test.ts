@@ -274,11 +274,11 @@ describe("/api/applications/[id]", () => {
       vi.mocked(requireUserOr401).mockResolvedValue(mockAuthenticatedUser());
       mockPrismaClient.jobApplication.findFirst.mockResolvedValue(existingApp);
       mockPrismaClient.jobApplication.update.mockResolvedValue({ ...existingApp, deletedAt: new Date() });
-      // Mock cascade deletes
+      // Mock cascade deletes for notes, tasks, contacts, attachmentLinks
       mockPrismaClient.note.updateMany.mockResolvedValue({ count: 2 });
       mockPrismaClient.task.updateMany.mockResolvedValue({ count: 1 });
       mockPrismaClient.contact.updateMany.mockResolvedValue({ count: 0 });
-      mockPrismaClient.interview.updateMany.mockResolvedValue({ count: 1 });
+      mockPrismaClient.attachmentLink.updateMany.mockResolvedValue({ count: 1 });
 
       const request = createDELETERequest("/api/applications/app123");
       const response = await DELETE(request, createRouteContext("app123"));

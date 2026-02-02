@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { logger } from "@/lib/logger";
 
 // Allowed origins for CSRF protection
 function getAllowedOrigins(): string[] {
@@ -73,7 +74,11 @@ export function middleware(req: NextRequest) {
       const isAllowed = allowedOrigins.some(allowed => origin === allowed);
       const isExtension = isExtensionOrigin(origin);
       if (!isAllowed && !isExtension) {
-        console.warn(`[CSRF] Blocked request from origin: ${origin}, allowed: ${allowedOrigins.join(", ")}`);
+        logger.warn("CSRF blocked request from invalid origin", { 
+          requestId: "csrf",
+          origin, 
+          allowedOrigins: allowedOrigins.join(", ") 
+        });
         return NextResponse.json(
           { error: { code: "FORBIDDEN", message: "Invalid origin" } },
           { status: 403 }

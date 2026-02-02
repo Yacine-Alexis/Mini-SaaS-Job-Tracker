@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { AuditAction } from "@prisma/client";
 import { NextRequest } from "next/server";
 import { getClientIp } from "@/lib/rateLimit";
+import { logger, getRequestId } from "@/lib/logger";
 
 export async function audit(req: NextRequest, userId: string, action: AuditAction, opts?: {
   entity?: string;
@@ -22,6 +23,11 @@ export async function audit(req: NextRequest, userId: string, action: AuditActio
     });
   } catch (error) {
     // Log but never block the request if audit logging fails
-    console.error("[Audit] Failed to log action:", action, error instanceof Error ? error.message : error);
+    logger.error("Failed to log audit action", { 
+      requestId: getRequestId(req),
+      userId,
+      action,
+      error: error instanceof Error ? error.message : String(error)
+    });
   }
 }

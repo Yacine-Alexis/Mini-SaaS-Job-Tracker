@@ -203,7 +203,7 @@ describe("/api/documents", () => {
           where: expect.objectContaining({
             userId: mockUserId,
             type: "RESUME",
-            isDefault: true,
+            deletedAt: null,
           }),
           data: { isDefault: false },
         })

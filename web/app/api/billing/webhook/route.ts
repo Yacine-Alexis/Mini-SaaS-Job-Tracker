@@ -3,19 +3,21 @@ import { getStripe } from "@/lib/stripe";
 import { prisma } from "@/lib/db";
 import { AuditAction } from "@prisma/client";
 import { audit } from "@/lib/audit";
+import { logger, getRequestId } from "@/lib/logger";
 
 export async function POST(req: NextRequest) {
+  const requestId = getRequestId(req);
   const stripe = getStripe();
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
 
   if (!stripe || !secret) {
-    console.error("[Stripe Webhook] Missing Stripe configuration (STRIPE_SECRET_KEY or STRIPE_WEBHOOK_SECRET)");
+    logger.error("Missing Stripe configuration", { requestId, error: "STRIPE_SECRET_KEY or STRIPE_WEBHOOK_SECRET not set" });
     return NextResponse.json({ ok: false, error: "webhook_not_configured" }, { status: 400 });
   }
 
   const sig = req.headers.get("stripe-signature");
   if (!sig) {
-    console.error("[Stripe Webhook] Missing stripe-signature header");
+    logger.error("Missing stripe-signature header", { requestId });
     return NextResponse.json({ ok: false, error: "missing_signature" }, { status: 400 });
   }
 
@@ -26,11 +28,11 @@ export async function POST(req: NextRequest) {
     event = stripe.webhooks.constructEvent(rawBody, sig, secret);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
-    console.error(`[Stripe Webhook] Signature verification failed: ${message}`);
+    logger.error("Stripe signature verification failed", { requestId, error: message });
     return NextResponse.json({ ok: false, error: "invalid_signature" }, { status: 400 });
   }
 
-  console.log(`[Stripe Webhook] Received event: ${event.type} (${event.id})`);
+  logger.info("Stripe webhook received", { requestId, eventType: event.type, eventId: event.id });
 
   // Minimal subscription -> PRO toggle
   if (event.type === "checkout.session.completed") {
@@ -49,9 +51,9 @@ export async function POST(req: NextRequest) {
         }
       });
       await audit(req, user.id, AuditAction.BILLING_UPGRADED, { meta: { from: "FREE", to: "PRO" } });
-      console.log(`[Stripe Webhook] User ${user.id} upgraded to PRO`);
+      logger.info("User upgraded to PRO", { requestId, userId: user.id });
     } else {
-      console.warn(`[Stripe Webhook] No user found for customer: ${customerId}`);
+      logger.warn("No user found for customer", { requestId, customerId });
     }
   }
   if (event.type === "customer.subscription.deleted") {
@@ -69,9 +71,9 @@ export async function POST(req: NextRequest) {
         }
       });
       await audit(req, user.id, AuditAction.BILLING_DOWNGRADED, { meta: { from: "PRO", to: "FREE" } });
-      console.log(`[Stripe Webhook] User ${user.id} downgraded to FREE`);
+      logger.info("User downgraded to FREE", { requestId, userId: user.id });
     } else {
-      console.warn(`[Stripe Webhook] No user found for customer: ${customerId}`);
+      logger.warn("No user found for customer", { requestId, customerId });
     }
   }
 

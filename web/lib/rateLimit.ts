@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { jsonError } from "@/lib/errors";
+import { logger } from "@/lib/logger";
 
 type Bucket = { count: number; resetAt: number };
 
@@ -66,7 +67,7 @@ async function rateLimitRedis(opts: { key: string; limit: number; windowMs: numb
     });
 
     if (!incrResponse.ok) {
-      console.error("[RateLimit] Redis INCR failed, falling back to memory");
+      logger.error("Redis INCR failed, falling back to memory", { requestId: "rate-limit", key: opts.key });
       return rateLimitMemory(opts);
     }
 
@@ -89,7 +90,11 @@ async function rateLimitRedis(opts: { key: string; limit: number; windowMs: numb
 
     return { ok: true, remaining: opts.limit - count };
   } catch (err) {
-    console.error("[RateLimit] Redis error, falling back to memory:", err);
+    logger.error("Redis error, falling back to memory", { 
+      requestId: "rate-limit", 
+      key: opts.key, 
+      error: err instanceof Error ? err.message : String(err) 
+    });
     return rateLimitMemory(opts);
   }
 }

@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
     },
   });
   if (existing) {
-    return jsonError(400, "BAD_REQUEST", "A label with this name already exists");
+    return jsonError(409, "DUPLICATE", "A label with this name already exists");
   }
 
   const label = await prisma.label.create({
@@ -97,7 +97,7 @@ export async function PATCH(req: NextRequest) {
       },
     });
     if (duplicate) {
-      return jsonError(400, "BAD_REQUEST", "A label with this name already exists");
+      return jsonError(409, "DUPLICATE", "A label with this name already exists");
     }
   }
 
