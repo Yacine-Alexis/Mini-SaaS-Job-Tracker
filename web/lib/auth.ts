@@ -1,3 +1,8 @@
+/**
+ * Authentication utilities and NextAuth configuration.
+ * @module lib/auth
+ */
+
 import { getServerSession } from "next-auth";
 import type { NextAuthOptions } from "next-auth";
 import type { JWT } from "next-auth/jwt";
@@ -26,9 +31,13 @@ declare module "next-auth" {
   }
 }
 
-// How often to refresh plan from database (5 minutes)
+/** How often to refresh plan from database (5 minutes) */
 const PLAN_CACHE_TTL = 5 * 60 * 1000;
 
+/**
+ * NextAuth configuration options.
+ * Uses JWT strategy with credentials provider (email/password).
+ */
 export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
   providers: [
@@ -98,15 +107,33 @@ export const authOptions: NextAuthOptions = {
   }
 };
 
-export async function requireUserId() {
+/**
+ * Gets the current user's ID from the session.
+ * 
+ * @returns The user ID if authenticated, null otherwise
+ * 
+ * @example
+ * ```ts
+ * const userId = await requireUserId();
+ * if (!userId) {
+ *   redirect("/login");
+ * }
+ * ```
+ */
+export async function requireUserId(): Promise<string | null> {
   const session = await getServerSession(authOptions);
   const userId = session?.user?.id;
   if (!userId) return null;
   return userId;
 }
 
-// Get user ID and plan from session (plan is cached in JWT)
-export async function requireUserWithPlan() {
+/**
+ * Gets the current user's ID and plan from the session.
+ * Plan is cached in the JWT and refreshed periodically.
+ * 
+ * @returns Object with userId and plan, or nulls if not authenticated
+ */
+export async function requireUserWithPlan(): Promise<{ userId: string | null; plan: Plan | null }> {
   const session = await getServerSession(authOptions);
   const userId = session?.user?.id;
   const plan = session?.user?.plan ?? "FREE";
@@ -114,15 +141,53 @@ export async function requireUserWithPlan() {
   return { userId, plan };
 }
 
-// Handy for route handlers
-export async function requireUserOr401() {
+/**
+ * Gets the user ID or returns a 401 error response.
+ * Use this in API route handlers.
+ * 
+ * @returns Object with userId (if authenticated) or error response
+ * 
+ * @example
+ * ```ts
+ * export async function GET(req: NextRequest) {
+ *   const { userId, error } = await requireUserOr401();
+ *   if (error) return error;
+ *   
+ *   // userId is guaranteed to be defined here
+ *   const data = await getData(userId);
+ *   return NextResponse.json(data);
+ * }
+ * ```
+ */
+export async function requireUserOr401(): Promise<
+  { userId: string; error: null } | { userId: null; error: ReturnType<typeof jsonError> }
+> {
   const userId = await requireUserId();
   if (!userId) return { userId: null, error: jsonError(401, "UNAUTHORIZED", "Please sign in.") };
   return { userId, error: null };
 }
 
-// Get user ID and plan, or return 401 error
-export async function requireUserWithPlanOr401() {
+/**
+ * Gets the user ID and plan, or returns a 401 error response.
+ * Use this in API route handlers that need plan information.
+ * 
+ * @returns Object with userId and plan (if authenticated) or error response
+ * 
+ * @example
+ * ```ts
+ * export async function POST(req: NextRequest) {
+ *   const { userId, plan, error } = await requireUserWithPlanOr401();
+ *   if (error) return error;
+ *   
+ *   if (!isPro(plan)) {
+ *     return jsonError(403, "PLAN_REQUIRED", "Pro required");
+ *   }
+ * }
+ * ```
+ */
+export async function requireUserWithPlanOr401(): Promise<
+  { userId: string; plan: Plan; error: null } | { userId: null; plan: null; error: ReturnType<typeof jsonError> }
+> {
   const session = await getServerSession(authOptions);
   const userId = session?.user?.id;
   const plan = session?.user?.plan ?? "FREE";

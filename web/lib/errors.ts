@@ -1,6 +1,16 @@
+/**
+ * API error handling utilities.
+ * Provides standardized error responses for API routes.
+ * @module lib/errors
+ */
+
 import { NextResponse } from "next/server";
 import type { ZodError, typeToFlattenedError } from "zod";
 
+/**
+ * Standard API error codes used across all endpoints.
+ * These codes are returned in the `error.code` field of error responses.
+ */
 export type ApiErrorCode =
   | "UNAUTHORIZED"
   | "FORBIDDEN"
@@ -16,6 +26,9 @@ export type ApiErrorCode =
   | "INVALID_CREDENTIALS"
   | "DUPLICATE";
 
+/**
+ * Standard API error response structure.
+ */
 export interface ApiError {
   error: {
     code: ApiErrorCode;
@@ -24,6 +37,24 @@ export interface ApiError {
   };
 }
 
+/**
+ * Creates a standardized JSON error response for API routes.
+ * 
+ * @param status - HTTP status code (e.g., 400, 401, 403, 404, 500)
+ * @param code - Error code for programmatic handling
+ * @param message - Human-readable error message
+ * @param details - Optional additional error details (e.g., validation errors)
+ * @returns NextResponse with JSON error body
+ * 
+ * @example
+ * ```ts
+ * // Simple error
+ * return jsonError(404, "NOT_FOUND", "Application not found");
+ * 
+ * // With validation details
+ * return jsonError(400, "VALIDATION_ERROR", "Invalid input", zodToDetails(parsed.error));
+ * ```
+ */
 export function jsonError(
   status: number,
   code: ApiErrorCode,
@@ -36,6 +67,20 @@ export function jsonError(
   );
 }
 
+/**
+ * Converts a Zod validation error into a flattened format suitable for API responses.
+ * 
+ * @param err - The Zod error to convert
+ * @returns Flattened error object with field-level and form-level errors
+ * 
+ * @example
+ * ```ts
+ * const parsed = schema.safeParse(body);
+ * if (!parsed.success) {
+ *   return jsonError(400, "VALIDATION_ERROR", "Invalid input", zodToDetails(parsed.error));
+ * }
+ * ```
+ */
 export function zodToDetails<T>(err: ZodError<T>): typeToFlattenedError<T> {
   return err.flatten();
 }
