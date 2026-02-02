@@ -1,7 +1,7 @@
 # Job Tracker Pro - Future Tasks Roadmap
 **Created:** February 2, 2026  
 **Last Updated:** February 2, 2026  
-**Current Status:** 403 tests passing, Grade A (92/100)
+**Current Status:** 527 tests passing, Grade A (94/100)
 
 ---
 
@@ -184,9 +184,9 @@
 - **Goal:** 430+ tests
 
 ### Sprint 16: Panel Abstraction
-- [ ] R1: Create CrudPanel<T>
-- [ ] R6: useOptimisticUpdate hook
-- **Goal:** Reduce code duplication by 50%
+- [x] R1: Create CrudPanel<T>
+- [x] R6: useOptimisticUpdate hook
+- **Goal:** Reduce code duplication by 50% ✅
 
 ### Sprint 17: Security Hardening
 - [ ] S1: Two-factor authentication
@@ -225,13 +225,15 @@
 | 12 | Types + Bundle | 355 | Feb 2026 |
 | 13 | Type Safety + Tests | 391 | Feb 2026 |
 | 14 | Warnings + ErrorBoundary | 403 | Feb 2026 |
+| 15 | Test Coverage Boost | 498 | Feb 2026 |
+| 16 | Panel Abstraction | 527 | Feb 2026 |
 
 ### Metrics Goals
 | Metric | Current | Target |
 |--------|---------|--------|
-| Unit Tests | 403 | 500+ |
+| Unit Tests | 527 | 500+ ✅ |
 | E2E Tests | 6 specs | 15+ specs |
-| Test Coverage | ~70% | 85%+ |
+| Test Coverage | ~75% | 85%+ |
 | Bundle Size | 87.7kB shared | <80kB |
 | Lighthouse Score | ~85 | 95+ |
 
@@ -248,4 +250,4 @@
 
 ---
 
-*Last reviewed: Sprint 14 complete*
+*Last reviewed: Sprint 16 complete*

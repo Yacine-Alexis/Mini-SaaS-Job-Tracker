@@ -65,6 +65,9 @@ const mockIntersectionObserver = vi.fn().mockImplementation((callback) => ({
 }));
 global.IntersectionObserver = mockIntersectionObserver as unknown as typeof IntersectionObserver;
 
+// Mock scrollIntoView (not available in jsdom)
+Element.prototype.scrollIntoView = vi.fn();
+
 // Suppress console.error in tests (optional, comment out for debugging)
 // vi.spyOn(console, 'error').mockImplementation(() => {});
 
