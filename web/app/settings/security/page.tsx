@@ -467,8 +467,9 @@ export default function SecuritySettingsPage() {
         onConfirm={revokeAllSessions}
         title="Revoke All Sessions"
         message={`This will sign you out from ${otherSessions.length} other device${otherSessions.length === 1 ? "" : "s"}. Your current session will remain active.`}
-        confirmLabel={revoking ? "Revoking..." : "Revoke All"}
-        destructive
+        confirmText={revoking ? "Revoking..." : "Revoke All"}
+        variant="danger"
+        loading={revoking}
       />
 
       {/* Disable 2FA Modal */}
@@ -499,8 +500,9 @@ export default function SecuritySettingsPage() {
             )}
           </div>
         }
-        confirmLabel={twoFactorLoading ? "Disabling..." : "Disable 2FA"}
-        destructive
+        confirmText={twoFactorLoading ? "Disabling..." : "Disable 2FA"}
+        variant="danger"
+        loading={twoFactorLoading}
       />
     </SettingsLayout>
   );

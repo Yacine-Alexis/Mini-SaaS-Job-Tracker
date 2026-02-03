@@ -70,9 +70,11 @@ export async function DELETE(req: NextRequest) {
     });
 
     await audit(req, userId, AuditAction.AUTH_LOGOUT, {
-      action: "revoke_all_sessions",
-      count: result.count,
-      ip,
+      meta: {
+        action: "revoke_all_sessions",
+        count: result.count,
+        ip,
+      },
     });
 
     return NextResponse.json({
@@ -82,7 +84,11 @@ export async function DELETE(req: NextRequest) {
     });
   }
 
-  // Revoke specific session
+  // Revoke specific session - sessionId is guaranteed non-null here
+  if (!sessionId) {
+    return jsonError(400, "MISSING_PARAM", "Session ID required");
+  }
+
   const session = await prisma.userSession.findFirst({
     where: { id: sessionId, userId },
   });
@@ -105,9 +111,11 @@ export async function DELETE(req: NextRequest) {
   });
 
   await audit(req, userId, AuditAction.AUTH_LOGOUT, {
-    action: "revoke_session",
-    sessionId,
-    ip,
+    meta: {
+      action: "revoke_session",
+      sessionId,
+      ip,
+    },
   });
 
   return NextResponse.json({

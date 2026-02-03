@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
       await audit(req, userId, AuditAction.APPLICATION_DELETED, {
         entity: "JobApplication",
         entityId: id,
-        bulkOperation: true
+        meta: { bulkOperation: true }
       });
     }
   } else if (operation === "update" && fields) {
@@ -169,8 +169,10 @@ export async function POST(req: NextRequest) {
       await audit(req, userId, AuditAction.APPLICATION_UPDATED, {
         entity: "JobApplication",
         entityId: id,
-        bulkOperation: true,
-        fields: Object.keys(fields)
+        meta: {
+          bulkOperation: true,
+          fields: Object.keys(fields)
+        }
       });
     }
   }

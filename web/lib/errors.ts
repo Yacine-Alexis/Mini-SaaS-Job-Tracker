@@ -5,7 +5,7 @@
  */
 
 import { NextResponse } from "next/server";
-import type { ZodError, typeToFlattenedError } from "zod";
+import type { ZodError, ZodFlattenedError } from "zod";
 
 /**
  * Standard API error codes used across all endpoints.
@@ -24,7 +24,21 @@ export type ApiErrorCode =
   | "PLAN_LIMIT"
   | "PLAN_REQUIRED"
   | "INVALID_CREDENTIALS"
-  | "DUPLICATE";
+  | "INVALID_JSON"
+  | "DUPLICATE"
+  // 2FA related
+  | "INVALID_2FA_CODE"
+  | "INVALID_ACTION"
+  | "ALREADY_ENABLED"
+  | "USER_NOT_FOUND"
+  | "SETUP_EXPIRED"
+  | "INVALID_CODE"
+  // Session related
+  | "MISSING_PARAM"
+  | "ALREADY_REVOKED"
+  | "CANNOT_REVOKE_CURRENT"
+  // Login related
+  | "ACCOUNT_LOCKED";
 
 /**
  * Standard API error response structure.
@@ -81,6 +95,6 @@ export function jsonError(
  * }
  * ```
  */
-export function zodToDetails<T>(err: ZodError<T>): typeToFlattenedError<T> {
+export function zodToDetails<T>(err: ZodError<T>): ZodFlattenedError<T> {
   return err.flatten();
 }

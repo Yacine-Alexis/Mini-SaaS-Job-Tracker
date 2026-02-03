@@ -3,8 +3,10 @@
 import { ReactNode } from "react";
 import Link from "next/link";
 
+export type IconType = "applications" | "notes" | "tasks" | "contacts" | "search" | "links" | "calendar" | "chart" | "document";
+
 interface EmptyStateProps {
-  icon?: "applications" | "notes" | "tasks" | "contacts" | "search" | "links" | "calendar" | "chart" | "document";
+  icon?: IconType;
   title: string;
   description?: string;
   action?: {

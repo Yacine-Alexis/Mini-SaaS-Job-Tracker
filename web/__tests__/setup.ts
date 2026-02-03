@@ -46,12 +46,42 @@ Object.defineProperty(window, "matchMedia", {
   })),
 });
 
-// Mock ResizeObserver
-global.ResizeObserver = vi.fn().mockImplementation(() => ({
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-  disconnect: vi.fn(),
-}));
+// Mock ResizeObserver with a proper class
+class MockResizeObserver {
+  callback: ResizeObserverCallback;
+  constructor(callback: ResizeObserverCallback) {
+    this.callback = callback;
+  }
+  observe = vi.fn((element: Element) => {
+    // Immediately call callback with fake entry to simulate observation
+    this.callback(
+      [
+        {
+          target: element,
+          contentRect: { width: 800, height: 400, top: 0, left: 0, right: 800, bottom: 400, x: 0, y: 0 } as DOMRectReadOnly,
+          borderBoxSize: [{ inlineSize: 800, blockSize: 400 }],
+          contentBoxSize: [{ inlineSize: 800, blockSize: 400 }],
+          devicePixelContentBoxSize: [{ inlineSize: 800, blockSize: 400 }],
+        } as ResizeObserverEntry,
+      ],
+      this
+    );
+  });
+  unobserve = vi.fn();
+  disconnect = vi.fn();
+}
+global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
+
+// Mock offsetWidth and offsetHeight for virtualization tests
+Object.defineProperty(HTMLElement.prototype, 'offsetWidth', {
+  configurable: true,
+  get: function() { return 800; },
+});
+
+Object.defineProperty(HTMLElement.prototype, 'offsetHeight', {
+  configurable: true,
+  get: function() { return 400; },
+});
 
 // Mock IntersectionObserver (required for Next.js Link component)
 const mockIntersectionObserver = vi.fn().mockImplementation((callback) => ({

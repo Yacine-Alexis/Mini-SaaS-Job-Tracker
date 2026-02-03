@@ -3,16 +3,15 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Mock environment variables
 vi.stubEnv("TWO_FACTOR_ENCRYPTION_KEY", "test-encryption-key-32-bytes-12");
 
-// Mock otplib before importing twoFactor
+// Mock otplib before importing twoFactor (v13 API)
 vi.mock("otplib", () => ({
-  authenticator: {
-    generateSecret: vi.fn(() => "JBSWY3DPEHPK3PXPTEST"),
-    keyuri: vi.fn((email, issuer, secret) => `otpauth://totp/${issuer}:${email}?secret=${secret}&issuer=${issuer}`),
-    verify: vi.fn(({ token, secret }) => {
-      // Accept any 6-digit token for testing
-      return /^\d{6}$/.test(token) && secret.length > 0;
-    }),
-  },
+  generateSecret: vi.fn(() => "JBSWY3DPEHPK3PXPTEST"),
+  keyuri: vi.fn((email, issuer, secret) => `otpauth://totp/${issuer}:${email}?secret=${secret}&issuer=${issuer}`),
+  verifySync: vi.fn(({ token, secret }) => {
+    // Accept any 6-digit token for testing, return object with valid property
+    const isValid = /^\d{6}$/.test(token) && secret.length > 0;
+    return { valid: isValid };
+  }),
 }));
 
 // Mock qrcode
@@ -22,7 +21,7 @@ vi.mock("qrcode", () => ({
 
 // Import after mocking
 import {
-  generateSecret,
+  generateTOTPSecret,
   encryptSecret,
   decryptSecret,
   generateBackupCodes,
@@ -33,9 +32,9 @@ import {
 } from "../twoFactor";
 
 describe("twoFactor", () => {
-  describe("generateSecret", () => {
+  describe("generateTOTPSecret", () => {
     it("generates a secret via otplib", () => {
-      const secret = generateSecret();
+      const secret = generateTOTPSecret();
       expect(secret).toBeDefined();
       expect(typeof secret).toBe("string");
       expect(secret).toBe("JBSWY3DPEHPK3PXPTEST"); // Mocked value
@@ -148,7 +147,7 @@ describe("twoFactor", () => {
 
   describe("verifyTOTP", () => {
     it("rejects invalid token format", () => {
-      const secret = generateSecret();
+      const secret = generateTOTPSecret();
       expect(verifyTOTP("12345", secret)).toBe(false); // 5 digits
       expect(verifyTOTP("1234567", secret)).toBe(false); // 7 digits
       expect(verifyTOTP("abcdef", secret)).toBe(false); // letters
@@ -158,7 +157,7 @@ describe("twoFactor", () => {
     it("accepts 6-digit tokens", () => {
       // We can't easily test valid tokens without knowing the current time
       // But we can verify the function doesn't throw on valid format
-      const secret = generateSecret();
+      const secret = generateTOTPSecret();
       const result = verifyTOTP("123456", secret);
       expect(typeof result).toBe("boolean");
     });

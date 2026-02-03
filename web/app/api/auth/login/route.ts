@@ -127,9 +127,11 @@ export async function POST(req: NextRequest) {
     if (twoFactorResult.usedBackupCode) {
       // Still allow login, but note it in audit
       await audit(req, user.id, AuditAction.AUTH_LOGIN, {
-        ip: clientIp,
-        email: normalizedEmail,
-        usedBackupCode: true,
+        meta: {
+          ip: clientIp,
+          email: normalizedEmail,
+          usedBackupCode: true,
+        },
       });
     }
   }
@@ -139,9 +141,11 @@ export async function POST(req: NextRequest) {
 
   // Audit successful login
   await audit(req, user.id, AuditAction.AUTH_LOGIN, {
-    ip: clientIp,
-    email: normalizedEmail,
-    twoFactorUsed: twoFactorEnabled,
+    meta: {
+      ip: clientIp,
+      email: normalizedEmail,
+      twoFactorUsed: twoFactorEnabled,
+    },
   });
 
   // Return success with user info for client-side signIn

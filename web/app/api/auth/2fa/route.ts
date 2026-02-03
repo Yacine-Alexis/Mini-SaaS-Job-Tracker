@@ -140,7 +140,7 @@ async function handleEnable(req: NextRequest, userId: string, body: unknown) {
   pendingSetups.delete(userId);
 
   await audit(req, userId, AuditAction.AUTH_LOGIN, {
-    action: "2fa_enabled",
+    meta: { action: "2fa_enabled" },
   });
 
   return NextResponse.json({ success: true, message: "2FA enabled successfully" });
@@ -168,7 +168,7 @@ async function handleDisable(req: NextRequest, userId: string, body: unknown) {
   await disable2FA(userId);
 
   await audit(req, userId, AuditAction.AUTH_LOGOUT, {
-    action: "2fa_disabled",
+    meta: { action: "2fa_disabled" },
   });
 
   return NextResponse.json({ success: true, message: "2FA disabled successfully" });
@@ -196,7 +196,7 @@ async function handleRegenerateBackup(req: NextRequest, userId: string, body: un
   const backupCodes = await regenerateBackupCodes(userId);
 
   await audit(req, userId, AuditAction.AUTH_LOGIN, {
-    action: "2fa_backup_codes_regenerated",
+    meta: { action: "2fa_backup_codes_regenerated" },
   });
 
   return NextResponse.json({

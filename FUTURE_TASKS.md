@@ -1,7 +1,7 @@
 # Job Tracker Pro - Future Tasks Roadmap
 **Created:** February 2, 2026  
-**Last Updated:** February 2, 2026  
-**Current Status:** 589 tests passing, Grade A (94/100)
+**Last Updated:** February 3, 2026  
+**Current Status:** 641 tests passing, Grade A (94/100)
 
 ---
 
@@ -69,8 +69,8 @@
 
 | # | Task | Priority | Effort | Description |
 |---|------|----------|--------|-------------|
-| F1 | Email notifications for interviews | High | 6h | Send reminders before scheduled interviews |
-| F2 | Bulk edit applications | High | 4h | Select multiple, change stage/tags |
+| ~~F1~~ | ~~Email notifications for interviews~~ | ~~High~~ | ~~6h~~ | ✅ Send reminders before scheduled interviews |
+| ~~F2~~ | ~~Bulk edit applications~~ | ~~High~~ | ~~4h~~ | ✅ Select multiple, change stage/tags |
 | F3 | Application templates | Medium | 4h | Save and reuse common application data |
 | F4 | Advanced search with filters | High | 5h | Date range, salary range, multiple tags |
 
@@ -201,9 +201,9 @@
 - **Goal:** Dev tooling modernized ✅
 
 ### Sprint 19: Feature Sprint
-- [ ] F1: Email notifications
-- [ ] F2: Bulk edit applications
-- **Goal:** Top requested features
+- [x] F1: Email notifications ✅
+- [x] F2: Bulk edit applications ✅
+- **Goal:** Top requested features ✅ (52 new tests)
 
 ### Sprint 20: Performance & Monitoring
 - [ ] P1: Virtual scrolling
@@ -229,13 +229,14 @@
 | 16 | Panel Abstraction | 527 | Feb 2026 |
 | 17 | Security Hardening | 589 | Feb 2026 |
 | 18 | Dependency Upgrades (Phase 1) | 589 | Feb 2026 |
+| 19 | Feature Sprint (F1 + F2) | 641 | Feb 2026 |
 
 ### Metrics Goals
 | Metric | Current | Target |
 |--------|---------|--------|
-| Unit Tests | 589 | 500+ ✅ |
+| Unit Tests | 641 | 500+ ✅ |
 | E2E Tests | 6 specs | 15+ specs |
-| Test Coverage | ~78% | 85%+ |
+| Test Coverage | ~80% | 85%+ |
 | Bundle Size | 87.7kB shared | <80kB |
 | Lighthouse Score | ~85 | 95+ |
 
@@ -252,4 +253,4 @@
 
 ---
 
-*Last reviewed: Sprint 18 complete*
+*Last reviewed: Sprint 19 complete*

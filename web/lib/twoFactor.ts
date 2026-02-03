@@ -5,7 +5,7 @@
  * @module lib/twoFactor
  */
 
-import { authenticator } from "otplib";
+import { generateSecret, verifySync } from "otplib";
 import * as QRCode from "qrcode";
 import { createHash, randomBytes, createCipheriv, createDecipheriv } from "crypto";
 import { prisma } from "@/lib/db";
@@ -103,15 +103,16 @@ export function generateBackupCodes(count: number = BACKUP_CODE_COUNT): string[]
 /**
  * Generate a new TOTP secret
  */
-export function generateSecret(): string {
-  return authenticator.generateSecret();
+export function generateTOTPSecret(): string {
+  return generateSecret();
 }
 
 /**
  * Generate QR code data URL for authenticator setup
  */
 export async function generateQRCodeDataURL(secret: string, email: string): Promise<string> {
-  const otpAuthUrl = authenticator.keyuri(email, APP_NAME, secret);
+  // Build otpauth URI manually since generateURI has been removed in newer versions
+  const otpAuthUrl = `otpauth://totp/${encodeURIComponent(APP_NAME)}:${encodeURIComponent(email)}?secret=${secret}&issuer=${encodeURIComponent(APP_NAME)}`;
   return QRCode.toDataURL(otpAuthUrl, {
     width: 200,
     margin: 2,
@@ -127,8 +128,9 @@ export async function generateQRCodeDataURL(secret: string, email: string): Prom
  */
 export function verifyTOTP(secret: string, code: string): boolean {
   try {
-    // Allow 1 window before and after for clock drift
-    return authenticator.verify({ token: code, secret });
+    // Use verifySync from otplib
+    const result = verifySync({ token: code, secret });
+    return result.valid;
   } catch {
     return false;
   }
@@ -144,7 +146,7 @@ export async function generate2FASetup(userId: string, email: string): Promise<{
   backupCodes: string[];
 }> {
   // Generate new secret
-  const secret = generateSecret();
+  const secret = generateTOTPSecret();
   
   // Generate QR code as data URL
   const qrCodeDataUrl = await generateQRCodeDataURL(secret, email);
