@@ -1,7 +1,7 @@
 # Job Tracker Pro - Future Tasks Roadmap
 **Created:** February 2, 2026  
 **Last Updated:** February 3, 2026  
-**Current Status:** 687 tests passing, Grade A (94/100)
+**Current Status:** 778 tests passing, Grade A (94/100)
 
 ---
 
@@ -26,12 +26,12 @@
 
 | # | Task | Priority | Effort | Files |
 |---|------|----------|--------|-------|
-| T1 | Add CommandPalette component tests | Medium | 2h | `CommandPalette.tsx` |
-| T2 | Add KanbanBoard component tests | Medium | 3h | `KanbanBoard.tsx` |
-| T3 | Add InterviewCalendar component tests | Medium | 2h | `InterviewCalendar.tsx` |
-| T4 | Add TagCloud component tests | Low | 1h | `TagCloud.tsx` |
-| T5 | Add MobileNav component tests | Low | 1h | `MobileNav.tsx`, `MobileBottomNav.tsx` |
-| T6 | Add TimelinePanel component tests | Medium | 2h | `TimelinePanel.tsx` |
+| ~~T1~~ | ~~Add CommandPalette component tests~~ | ~~Medium~~ | ~~2h~~ | ✅ 31 tests |
+| ~~T2~~ | ~~Add KanbanBoard component tests~~ | ~~Medium~~ | ~~3h~~ | ✅ 23 tests |
+| ~~T3~~ | ~~Add InterviewCalendar component tests~~ | ~~Medium~~ | ~~2h~~ | ✅ 41 tests |
+| ~~T4~~ | ~~Add TagCloud component tests~~ | ~~Low~~ | ~~1h~~ | ✅ 40 tests |
+| ~~T5~~ | ~~Add MobileNav component tests~~ | ~~Low~~ | ~~1h~~ | ✅ 26 tests |
+| ~~T6~~ | ~~Add TimelinePanel component tests~~ | ~~Medium~~ | ~~2h~~ | ✅ 25 tests |
 
 ### E2E Testing
 
@@ -211,6 +211,12 @@
 - [x] D5: Performance monitoring ✅ (17 tests)
 - **Goal:** Production observability ✅ (46 new tests)
 
+### Sprint 21: Test Coverage Boost
+- [x] T4: TagCloud component tests ✅ (40 tests)
+- [x] T5: MobileNav component tests ✅ (26 tests)
+- [x] T6: TimelinePanel component tests ✅ (25 tests)
+- **Goal:** Complete component test coverage ✅ (91 new tests)
+
 ---
 
 ## 📊 Progress Tracking
@@ -231,11 +237,12 @@
 | 18 | Dependency Upgrades (Phase 1) | 589 | Feb 2026 |
 | 19 | Feature Sprint (F1 + F2) | 641 | Feb 2026 |
 | 20 | Performance & Monitoring | 687 | Feb 2026 |
+| 21 | Test Coverage Boost | 778 | Feb 2026 |
 
 ### Metrics Goals
 | Metric | Current | Target |
 |--------|---------|--------|
-| Unit Tests | 687 | 500+ ✅ |
+| Unit Tests | 778 | 500+ ✅ |
 | E2E Tests | 6 specs | 15+ specs |
 | Test Coverage | ~80% | 85%+ |
 | Bundle Size | 87.7kB shared | <80kB |
@@ -251,6 +258,10 @@
 - 🟢 **Low** - Nice to have
 - 🔵 **Enhancement** - New feature
 - ⚪ **Chore** - Maintenance
+
+---
+
+*Last reviewed: Sprint 21 complete*
 
 ---
 
