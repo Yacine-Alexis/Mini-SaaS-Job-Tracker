@@ -190,63 +190,72 @@ export default function ApplicationsClient() {
     }
   }
 
-  // Batch delete - parallel requests with Promise.allSettled for resilience
+  // Batch delete - uses bulk API for efficiency
   async function handleBatchDelete() {
     setBatchDeleting(true);
 
-    const results = await Promise.allSettled(
-      Array.from(selectedIds).map(async (id) => {
-        const res = await fetch(`/api/applications/${id}`, { method: "DELETE" });
-        if (!res.ok) throw new Error(`Failed to delete ${id}`);
-        return id;
-      })
-    );
+    try {
+      const res = await fetch("/api/applications/bulk", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          ids: Array.from(selectedIds),
+          operation: "delete"
+        }),
+      });
 
-    const successCount = results.filter((r) => r.status === "fulfilled").length;
-    const failCount = results.filter((r) => r.status === "rejected").length;
+      const result = await res.json();
+      
+      setBatchDeleting(false);
+      setDeleteModalOpen(false);
+      setSelectedIds(new Set());
 
-    setBatchDeleting(false);
-    setDeleteModalOpen(false);
-    setSelectedIds(new Set());
-
-    if (successCount > 0) {
-      addToast({ type: "success", title: `Deleted ${successCount} application${successCount > 1 ? "s" : ""}` });
-    }
-    if (failCount > 0) {
-      addToast({ type: "error", title: `Failed to delete ${failCount} application${failCount > 1 ? "s" : ""}` });
+      if (result.deleted > 0) {
+        addToast({ type: "success", title: `Deleted ${result.deleted} application${result.deleted > 1 ? "s" : ""}` });
+      }
+      if (result.failed > 0) {
+        addToast({ type: "error", title: `Failed to delete ${result.failed} application${result.failed > 1 ? "s" : ""}` });
+      }
+    } catch {
+      setBatchDeleting(false);
+      setDeleteModalOpen(false);
+      addToast({ type: "error", title: "Failed to delete applications" });
     }
 
     await load();
   }
 
-  // Batch stage change - parallel requests with Promise.allSettled for resilience
-  async function handleBatchStageChange(stage: ApplicationStage) {
+  // Batch stage change - uses bulk API for efficiency
+  async function handleBatchStageChange(newStage: ApplicationStage) {
     setBatchDeleting(true);
 
-    const results = await Promise.allSettled(
-      Array.from(selectedIds).map(async (id) => {
-        const res = await fetch(`/api/applications/${id}`, {
-          method: "PATCH",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ stage }),
-        });
-        if (!res.ok) throw new Error(`Failed to update ${id}`);
-        return id;
-      })
-    );
+    try {
+      const res = await fetch("/api/applications/bulk", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          ids: Array.from(selectedIds),
+          operation: "update",
+          fields: { stage: newStage }
+        }),
+      });
 
-    const successCount = results.filter((r) => r.status === "fulfilled").length;
-    const failCount = results.filter((r) => r.status === "rejected").length;
+      const result = await res.json();
 
-    setBatchDeleting(false);
-    setBatchStageModalOpen(false);
-    setSelectedIds(new Set());
+      setBatchDeleting(false);
+      setBatchStageModalOpen(false);
+      setSelectedIds(new Set());
 
-    if (successCount > 0) {
-      addToast({ type: "success", title: `Updated ${successCount} application${successCount > 1 ? "s" : ""}` });
-    }
-    if (failCount > 0) {
-      addToast({ type: "error", title: `Failed to update ${failCount} application${failCount > 1 ? "s" : ""}` });
+      if (result.updated > 0) {
+        addToast({ type: "success", title: `Updated ${result.updated} application${result.updated > 1 ? "s" : ""}` });
+      }
+      if (result.failed > 0) {
+        addToast({ type: "error", title: `Failed to update ${result.failed} application${result.failed > 1 ? "s" : ""}` });
+      }
+    } catch {
+      setBatchDeleting(false);
+      setBatchStageModalOpen(false);
+      addToast({ type: "error", title: "Failed to update applications" });
     }
 
     await load();

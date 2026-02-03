@@ -275,6 +275,7 @@ model Interview {
   notes          String?         // Preparation notes
   feedback       String?         // Post-interview feedback
   result         InterviewResult @default(PENDING)
+  reminderSent   Boolean         @default(false)  // Track if reminder email was sent
 
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
@@ -283,6 +284,7 @@ model Interview {
   @@index([userId, applicationId])
   @@index([userId, scheduledAt])
   @@index([applicationId, deletedAt])
+  @@index([reminderSent, scheduledAt])  // For efficient reminder queries
 }
 
 enum DocumentType {
