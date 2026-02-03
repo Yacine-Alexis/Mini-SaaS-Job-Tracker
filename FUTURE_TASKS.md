@@ -158,9 +158,9 @@
 | U2 | React | 18.3.1 | 19.x | 4h | New hooks, concurrent features |
 | U3 | Prisma | 5.22.0 | 7.x | 6h | Schema changes, new features |
 | U4 | Tailwind CSS | 3.4.19 | 4.x | 4h | Config format changes |
-| U5 | Vitest | 2.1.9 | 4.x | 2h | API changes |
-| U6 | ESLint | 8.57.1 | 9.x | 3h | Flat config migration |
-| U7 | Zod | 3.25.76 | 4.x | 2h | API changes |
+| ~~U5~~ | ~~Vitest~~ | ~~2.1.9~~ | ~~4.x~~ | ~~2h~~ | ✅ Upgraded to 4.0.18 |
+| U6 | ESLint | 8.57.1 | 9.x | 3h | ⏳ Requires Next.js 15+ for eslint-config-next support |
+| ~~U7~~ | ~~Zod~~ | ~~3.25.76~~ | ~~4.x~~ | ~~2h~~ | ✅ Upgraded to 4.3.6 |
 | U8 | bcryptjs | 2.4.3 | 3.x | 1h | Minor API changes |
 
 ### Recommended Upgrade Order
@@ -195,10 +195,10 @@
 - **Goal:** Enterprise-ready auth ✅ (62 new tests)
 
 ### Sprint 18: Dependency Upgrades (Phase 1)
-- [ ] U5: Vitest 4
-- [ ] U6: ESLint 9
-- [ ] U7: Zod 4
-- **Goal:** Dev tooling modernized
+- [x] U5: Vitest 4 ✅
+- [ ] U6: ESLint 9 (⏳ blocked by Next.js 14 → needs Next.js 15+)
+- [x] U7: Zod 4 ✅
+- **Goal:** Dev tooling modernized ✅
 
 ### Sprint 19: Feature Sprint
 - [ ] F1: Email notifications
@@ -228,6 +228,7 @@
 | 15 | Test Coverage Boost | 498 | Feb 2026 |
 | 16 | Panel Abstraction | 527 | Feb 2026 |
 | 17 | Security Hardening | 589 | Feb 2026 |
+| 18 | Dependency Upgrades (Phase 1) | 589 | Feb 2026 |
 
 ### Metrics Goals
 | Metric | Current | Target |
@@ -251,4 +252,4 @@
 
 ---
 
-*Last reviewed: Sprint 17 complete*
+*Last reviewed: Sprint 18 complete*
