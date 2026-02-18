@@ -8,8 +8,9 @@ import { enforceRateLimitAsync } from "@/lib/rateLimit";
 import { audit } from "@/lib/audit";
 import { AuditAction } from "@prisma/client";
 
+// Schema allows currentPassword to be optional for OAuth-only users setting a password
 const schema = z.object({
-  currentPassword: z.string().min(1),
+  currentPassword: z.string().optional(),
   newPassword: z.string().min(8).max(72) // bcrypt truncates at 72 bytes
 });
 
@@ -26,15 +27,23 @@ export async function POST(req: NextRequest) {
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) return jsonError(404, "NOT_FOUND", "User not found");
-  if (!user.passwordHash) return jsonError(400, "BAD_REQUEST", "Password auth not enabled for this account.");
 
-  const ok = await bcrypt.compare(parsed.data.currentPassword, user.passwordHash);
-  if (!ok) return jsonError(400, "INVALID_CREDENTIALS", "Current password is incorrect.");
+  // If user has a password, require current password to change it
+  if (user.passwordHash) {
+    if (!parsed.data.currentPassword) {
+      return jsonError(400, "VALIDATION_ERROR", "Current password is required");
+    }
+    const ok = await bcrypt.compare(parsed.data.currentPassword, user.passwordHash);
+    if (!ok) return jsonError(400, "INVALID_CREDENTIALS", "Current password is incorrect.");
+  }
+  // If user has no password (OAuth-only), they can set one without providing current password
 
   const passwordHash = await bcrypt.hash(parsed.data.newPassword, 12);
   await prisma.user.update({ where: { id: userId }, data: { passwordHash } });
 
-  await audit(req, userId, AuditAction.AUTH_PASSWORD_RESET, { meta: { via: "change_password" } });
+  await audit(req, userId, AuditAction.AUTH_PASSWORD_RESET, { 
+    meta: { via: user.passwordHash ? "change_password" : "set_password" } 
+  });
 
   return NextResponse.json({ ok: true });
 }

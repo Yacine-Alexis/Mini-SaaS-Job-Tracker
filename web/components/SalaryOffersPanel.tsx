@@ -20,11 +20,11 @@ type SalaryOffer = {
   createdAt: string;
 };
 
-const OFFER_TYPE_LABELS: Record<OfferType, { label: string; color: string; icon: string }> = {
-  INITIAL_OFFER: { label: "Initial Offer", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400", icon: "📩" },
-  COUNTER_OFFER: { label: "Counter Offer", color: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400", icon: "🔄" },
-  REVISED_OFFER: { label: "Revised Offer", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400", icon: "📝" },
-  FINAL_OFFER: { label: "Final Offer", color: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400", icon: "✅" },
+const OFFER_TYPE_LABELS: Record<OfferType, { label: string; color: string }> = {
+  INITIAL_OFFER: { label: "Initial Offer", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
+  COUNTER_OFFER: { label: "Counter Offer", color: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400" },
+  REVISED_OFFER: { label: "Revised Offer", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" },
+  FINAL_OFFER: { label: "Final Offer", color: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" },
 };
 
 interface SalaryOffersPanelProps {
@@ -179,7 +179,9 @@ export default function SalaryOffersPanel({ applicationId }: SalaryOffersPanelPr
     <div className="card p-4">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-          <span>💰</span>
+          <svg className="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
           Salary Offers
         </h2>
         <button
@@ -369,7 +371,9 @@ export default function SalaryOffersPanel({ applicationId }: SalaryOffersPanelPr
       {/* Empty State */}
       {!loading && !err && offers.length === 0 && (
         <div className="text-center py-6 text-zinc-500 dark:text-zinc-400">
-          <span className="text-3xl">💸</span>
+          <svg className="h-10 w-10 mx-auto text-zinc-400 dark:text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
           <p className="mt-2 text-sm">No offers recorded yet</p>
           <p className="text-xs">Track offers and negotiations here</p>
         </div>
@@ -388,7 +392,7 @@ export default function SalaryOffersPanel({ applicationId }: SalaryOffersPanelPr
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2">
                     <span className={`text-xs px-2 py-0.5 rounded-full ${typeInfo.color}`}>
-                      {typeInfo.icon} {typeInfo.label}
+                      {typeInfo.label}
                     </span>
                     {offer.isAccepted === true && (
                       <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">

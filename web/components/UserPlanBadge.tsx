@@ -31,7 +31,7 @@ export default function UserPlanBadge({ inline = false }: UserPlanBadgeProps) {
         ? "bg-gradient-to-r from-amber-500/10 to-orange-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800" 
         : "bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400"
     }`}>
-      {isPro ? "✨ Pro" : "Free"}
+      {isPro ? "Pro" : "Free"}
     </span>
   );
 }

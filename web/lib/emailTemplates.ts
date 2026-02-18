@@ -158,7 +158,7 @@ Job Tracker Team`,
           <tr>
             <td style="padding: 40px;">
               <h1 style="margin: 0 0 24px; font-size: 24px; font-weight: 600; color: #18181b;">
-                Welcome to Job Tracker! 🎉
+                Welcome to Job Tracker!
               </h1>
               <p style="margin: 0 0 16px; font-size: 16px; line-height: 1.5; color: #3f3f46;">
                 Hi there,
@@ -175,7 +175,7 @@ Job Tracker Team`,
                 <li>Tracking your progress</li>
               </ul>
               <p style="margin: 0; font-size: 16px; line-height: 1.5; color: #3f3f46;">
-                Best of luck with your job search! 🍀
+                Best of luck with your job search!
               </p>
             </td>
           </tr>
@@ -221,7 +221,7 @@ export function followUpReminderTemplate(items: ReminderItem[], dashboardUrl: st
           <span style="color: #71717a;"> - ${escapeHtml(item.title)}</span>
         </div>
         <div style="font-size: 14px; color: #3f3f46; margin-bottom: 4px;">
-          📋 ${escapeHtml(item.taskTitle)}
+          ${escapeHtml(item.taskTitle)}
         </div>
         <div style="font-size: 13px; color: #f97316; font-weight: 500;">
           ⏰ Due: ${escapeHtml(item.dueDate)}
@@ -231,7 +231,7 @@ export function followUpReminderTemplate(items: ReminderItem[], dashboardUrl: st
   }).join("");
 
   return {
-    subject: `🔔 You have ${items.length} follow-up${items.length > 1 ? "s" : ""} due - Job Tracker`,
+    subject: `You have ${items.length} follow-up${items.length > 1 ? "s" : ""} due - Job Tracker`,
     text: `Follow-up Reminders
 
 You have ${items.length} pending task${items.length > 1 ? "s" : ""} that need your attention:
@@ -261,7 +261,7 @@ Tip: Stay on top of your applications by completing follow-ups promptly!`,
           <tr>
             <td style="padding: 40px;">
               <h1 style="margin: 0 0 8px; font-size: 24px; font-weight: 600; color: #18181b;">
-                🔔 Follow-up Reminders
+                Follow-up Reminders
               </h1>
               <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.5; color: #71717a;">
                 You have ${items.length} pending task${items.length > 1 ? "s" : ""} that need your attention
@@ -282,7 +282,7 @@ Tip: Stay on top of your applications by completing follow-ups promptly!`,
               </table>
 
               <p style="margin: 24px 0 0; font-size: 14px; color: #71717a; text-align: center;">
-                💡 Tip: Stay on top of your applications by completing follow-ups promptly!
+                Tip: Stay on top of your applications by completing follow-ups promptly!
               </p>
             </td>
           </tr>
@@ -372,7 +372,7 @@ Job Tracker Team`,
           <tr>
             <td style="padding: 40px;">
               <h1 style="margin: 0 0 8px; font-size: 24px; font-weight: 600; color: #18181b;">
-                📅 Interview Reminder
+                Interview Reminder
               </h1>
               <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.5; color: #71717a;">
                 You have an upcoming interview!
@@ -427,7 +427,7 @@ Job Tracker Team`,
               </table>
 
               <p style="margin: 24px 0 0; font-size: 14px; color: #71717a; text-align: center;">
-                🍀 Good luck with your interview!
+                Good luck with your interview!
               </p>
             </td>
           </tr>
@@ -522,7 +522,7 @@ Job Tracker Team`,
           <tr>
             <td style="padding: 40px;">
               <h1 style="margin: 0 0 8px; font-size: 24px; font-weight: 600; color: #18181b;">
-                📊 Weekly Summary
+                Weekly Summary
               </h1>
               <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.5; color: #71717a;">
                 Here's your job search overview for this week
@@ -559,7 +559,7 @@ Job Tracker Team`,
 
               <!-- Upcoming Interviews -->
               <h3 style="margin: 0 0 12px; font-size: 16px; font-weight: 600; color: #18181b;">
-                📅 Upcoming Interviews
+                Upcoming Interviews
               </h3>
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #fafafa; border-radius: 8px; margin-bottom: 24px;">
                 ${upcomingHtml}
@@ -586,7 +586,7 @@ Job Tracker Team`,
               </table>
 
               <p style="margin: 24px 0 0; font-size: 14px; color: #71717a; text-align: center;">
-                Keep up the great work! 💪
+                Keep up the great work!
               </p>
             </td>
           </tr>
@@ -650,7 +650,7 @@ Job Tracker Team`,
           <tr>
             <td style="padding: 40px;">
               <h1 style="margin: 0 0 8px; font-size: 24px; font-weight: 600; color: #18181b;">
-                ✅ Task Reminder
+                Task Reminder
               </h1>
               <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.5; color: #71717a;">
                 You have ${tasks.length} task${tasks.length > 1 ? "s" : ""} due soon

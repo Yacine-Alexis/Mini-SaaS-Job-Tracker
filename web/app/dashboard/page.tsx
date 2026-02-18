@@ -132,7 +132,7 @@ export default async function DashboardPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-            Welcome back! 👋
+            Welcome back
           </h1>
           <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
             Here&apos;s what&apos;s happening with your job search today.
@@ -204,35 +204,30 @@ export default async function DashboardPage() {
                 count={stageCounts["SAVED"] ?? 0}
                 total={total}
                 color="bg-zinc-400"
-                emoji="📌"
               />
               <PipelineRow
                 stage="Applied"
                 count={stageCounts["APPLIED"] ?? 0}
                 total={total}
                 color="bg-blue-500"
-                emoji="📤"
               />
               <PipelineRow
                 stage="Interview"
                 count={stageCounts["INTERVIEW"] ?? 0}
                 total={total}
                 color="bg-amber-500"
-                emoji="🎤"
               />
               <PipelineRow
                 stage="Offer"
                 count={stageCounts["OFFER"] ?? 0}
                 total={total}
                 color="bg-green-500"
-                emoji="🎉"
               />
               <PipelineRow
                 stage="Rejected"
                 count={stageCounts["REJECTED"] ?? 0}
                 total={total}
                 color="bg-red-400"
-                emoji="❌"
               />
             </div>
           </div>
@@ -243,7 +238,7 @@ export default async function DashboardPage() {
           {/* Upcoming Interviews */}
           <div className="card p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold text-zinc-900 dark:text-zinc-100">🎤 Upcoming Interviews</h2>
+              <h2 className="font-semibold text-zinc-900 dark:text-zinc-100">Upcoming Interviews</h2>
               <Link href="/applications" className="text-xs text-blue-600 dark:text-blue-400 hover:underline">View all</Link>
             </div>
             {upcomingInterviews.length > 0 ? (
@@ -260,7 +255,9 @@ export default async function DashboardPage() {
                       className="flex items-start gap-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 hover:border-amber-300 dark:hover:border-amber-700 transition-colors"
                     >
                       <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center">
-                        <span className="text-lg">📅</span>
+                        <svg className="h-5 w-5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                        </svg>
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
@@ -358,7 +355,7 @@ export default async function DashboardPage() {
 
           {/* Insights Card */}
           <div className="card p-6 bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-950/30 dark:to-blue-950/30 border-indigo-100 dark:border-indigo-900/50">
-            <h2 className="font-semibold text-indigo-900 dark:text-indigo-100 mb-3">💡 Quick Insights</h2>
+            <h2 className="font-semibold text-indigo-900 dark:text-indigo-100 mb-3">Quick Insights</h2>
             <div className="space-y-2 text-sm text-indigo-700 dark:text-indigo-300">
               {avgSalary > 0 && (
                 <p>• Avg. target salary: <span className="font-semibold">${avgSalary.toLocaleString()}</span></p>
@@ -367,7 +364,7 @@ export default async function DashboardPage() {
                 <p>• You&apos;ve applied to <span className="font-semibold">{appliedLike}</span> positions</p>
               )}
               {(stageCounts["OFFER"] ?? 0) > 0 && (
-                <p>• 🎉 You have <span className="font-semibold">{stageCounts["OFFER"]}</span> active offer(s)!</p>
+                <p>• You have <span className="font-semibold">{stageCounts["OFFER"]}</span> active offer(s)!</p>
               )}
               {total === 0 && (
                 <p>• Start by adding your first job application!</p>
@@ -430,12 +427,12 @@ function StatCard({ label, value, icon, color }: { label: string; value: string;
   );
 }
 
-function PipelineRow({ stage, count, total, color, emoji }: { stage: string; count: number; total: number; color: string; emoji: string }) {
+function PipelineRow({ stage, count, total, color }: { stage: string; count: number; total: number; color: string }) {
   const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
 
   return (
     <div className="flex items-center gap-3">
-      <span className="text-lg">{emoji}</span>
+      <div className={`w-3 h-3 rounded-full ${color}`} />
       <div className="flex-1">
         <div className="flex items-center justify-between text-sm mb-1">
           <span className="text-zinc-700 dark:text-zinc-300">{stage}</span>

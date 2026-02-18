@@ -53,6 +53,9 @@ export function useKeyboardShortcut(bindings: KeyBinding | KeyBinding[]) {
                       target.tagName === "TEXTAREA" || 
                       target.isContentEditable;
 
+      // Guard against undefined e.key (can happen with some keyboard events)
+      if (!e.key) return;
+
       for (const binding of bindingsArray) {
         const keyMatch = e.key.toLowerCase() === binding.key.toLowerCase();
         const ctrlMatch = binding.ctrl ? (e.ctrlKey || e.metaKey) : !e.ctrlKey;

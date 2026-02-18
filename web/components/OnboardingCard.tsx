@@ -28,7 +28,7 @@ export default function OnboardingCard({ onSeeded }: { onSeeded?: () => Promise<
 
   return (
     <div className="card p-6 space-y-2">
-      <div className="text-lg font-semibold">Welcome 👋</div>
+      <div className="text-lg font-semibold">Welcome</div>
       <p className="text-sm text-zinc-600">
         Get started by creating your first application, importing from CSV, or adding sample data.
       </p>

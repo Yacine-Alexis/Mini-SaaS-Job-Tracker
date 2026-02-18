@@ -26,7 +26,7 @@ describe('UserPlanBadge', () => {
     it('displays Pro badge', async () => {
       render(<UserPlanBadge />);
       await waitFor(() => {
-        expect(screen.getByText('✨ Pro')).toBeInTheDocument();
+        expect(screen.getByText('Pro')).toBeInTheDocument();
       });
     });
 

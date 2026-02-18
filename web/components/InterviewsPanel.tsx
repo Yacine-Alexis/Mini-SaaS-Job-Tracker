@@ -25,13 +25,13 @@ type Interview = {
 };
 
 const TYPE_LABELS: Record<InterviewType, string> = {
-  PHONE: "📞 Phone",
-  VIDEO: "📹 Video",
-  ONSITE: "🏢 On-site",
-  TECHNICAL: "💻 Technical",
-  BEHAVIORAL: "🗣️ Behavioral",
-  FINAL: "🎯 Final",
-  OTHER: "📋 Other"
+  PHONE: "Phone",
+  VIDEO: "Video",
+  ONSITE: "On-site",
+  TECHNICAL: "Technical",
+  BEHAVIORAL: "Behavioral",
+  FINAL: "Final",
+  OTHER: "Other"
 };
 
 const RESULT_LABELS: Record<InterviewResult, { label: string; class: string }> = {
@@ -396,12 +396,12 @@ function InterviewRow({
               </div>
               {interview.location && (
                 <div className="text-sm text-zinc-500 dark:text-zinc-400 truncate">
-                  📍 {interview.location}
+                  {interview.location}
                 </div>
               )}
               {interview.interviewers.length > 0 && (
                 <div className="text-sm text-zinc-500 dark:text-zinc-400">
-                  👥 {interview.interviewers.join(", ")}
+                  {interview.interviewers.join(", ")}
                 </div>
               )}
               {interview.notes && (

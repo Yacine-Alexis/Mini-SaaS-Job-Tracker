@@ -28,7 +28,7 @@ describe('OnboardingCard', () => {
   describe('rendering', () => {
     it('displays welcome message', () => {
       render(<OnboardingCard />);
-      expect(screen.getByText('Welcome 👋')).toBeInTheDocument();
+      expect(screen.getByText('Welcome')).toBeInTheDocument();
     });
 
     it('displays getting started instructions', () => {

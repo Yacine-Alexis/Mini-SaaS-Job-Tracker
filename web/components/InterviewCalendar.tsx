@@ -47,13 +47,13 @@ const TYPE_COLORS: Record<InterviewType, string> = {
 };
 
 const TYPE_LABELS: Record<InterviewType, string> = {
-  PHONE: "📞 Phone",
-  VIDEO: "📹 Video",
-  ONSITE: "🏢 On-site",
-  TECHNICAL: "💻 Technical",
-  BEHAVIORAL: "🗣️ Behavioral",
-  FINAL: "🎯 Final",
-  OTHER: "📋 Other",
+  PHONE: "Phone",
+  VIDEO: "Video",
+  ONSITE: "On-site",
+  TECHNICAL: "Technical",
+  BEHAVIORAL: "Behavioral",
+  FINAL: "Final",
+  OTHER: "Other",
 };
 
 const RESULT_STYLES: Record<InterviewResult, { bg: string; text: string }> = {

@@ -139,7 +139,9 @@ export default function EmailNotificationsSettings() {
       {prefs.unsubscribedAll && (
         <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
           <div className="flex items-center gap-2">
-            <span className="text-amber-600 dark:text-amber-400">⚠️</span>
+            <svg className="h-5 w-5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+            </svg>
             <span className="font-medium text-amber-700 dark:text-amber-300">
               All email notifications are currently disabled
             </span>
@@ -162,7 +164,7 @@ export default function EmailNotificationsSettings() {
         <div className="flex items-start justify-between">
           <div>
             <h3 className="font-medium text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-              📅 Interview Reminders
+              Interview Reminders
             </h3>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
               Get notified before upcoming interviews
@@ -201,7 +203,7 @@ export default function EmailNotificationsSettings() {
         <div className="flex items-start justify-between">
           <div>
             <h3 className="font-medium text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-              ✅ Task Due Date Reminders
+              Task Due Date Reminders
             </h3>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
               Get notified when tasks are approaching their due date
@@ -240,7 +242,7 @@ export default function EmailNotificationsSettings() {
         <div className="flex items-start justify-between">
           <div>
             <h3 className="font-medium text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-              🔔 Follow-up Reminders
+              Follow-up Reminders
             </h3>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
               Get reminded to follow up on applications with scheduled follow-up dates
@@ -264,7 +266,7 @@ export default function EmailNotificationsSettings() {
         <div className="flex items-start justify-between">
           <div>
             <h3 className="font-medium text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-              ⏰ Stale Application Alerts
+              Stale Application Alerts
             </h3>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
               Get alerted about applications with no activity
@@ -301,7 +303,7 @@ export default function EmailNotificationsSettings() {
       {/* Digest Emails */}
       <div className="card p-4">
         <h3 className="font-medium text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-          📊 Digest Emails
+          Digest Emails
         </h3>
         <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
           Receive a summary of your job search activity
@@ -360,7 +362,7 @@ export default function EmailNotificationsSettings() {
         <div className="flex items-start justify-between">
           <div>
             <h3 className="font-medium text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-              🔄 Status Change Notifications
+              Status Change Notifications
             </h3>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
               Get notified when application statuses change (via integrated job boards)
@@ -384,7 +386,7 @@ export default function EmailNotificationsSettings() {
         <div className="flex items-start justify-between">
           <div>
             <h3 className="font-medium text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-              📰 Product Updates & Tips
+              Product Updates & Tips
             </h3>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
               Receive occasional tips and feature announcements
@@ -408,7 +410,7 @@ export default function EmailNotificationsSettings() {
         <div className="flex items-start justify-between">
           <div>
             <h3 className="font-medium text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-              🚫 Unsubscribe from All Emails
+              Unsubscribe from All Emails
             </h3>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
               Disable all email notifications from JobTracker

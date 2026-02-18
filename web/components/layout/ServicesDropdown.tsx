@@ -53,7 +53,7 @@ export function ServicesDropdown() {
           ))}
           <div className="mt-2 pt-2 border-t border-zinc-100 dark:border-zinc-700">
             <div className="px-3 py-2 text-xs text-zinc-400 dark:text-zinc-500">
-              More tools coming in 2026 🚀
+              More tools coming in 2026
             </div>
           </div>
         </div>

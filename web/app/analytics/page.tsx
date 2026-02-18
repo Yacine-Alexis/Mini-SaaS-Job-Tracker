@@ -150,7 +150,7 @@ export default async function AnalyticsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">📊 Analytics</h1>
+          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Analytics</h1>
           <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
             Insights from your job search journey
           </p>
@@ -160,10 +160,10 @@ export default async function AnalyticsPage() {
 
       {/* Key Metrics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard label="Total Applications" value={totalApps} icon="📋" />
-        <MetricCard label="Last 30 Days" value={monthlyApps} icon="📈" />
-        <MetricCard label="Response Rate" value={`${responseRate}%`} icon="📬" />
-        <MetricCard label="Offer Rate" value={`${offerRate}%`} icon="🎯" />
+        <MetricCard label="Total Applications" value={totalApps} />
+        <MetricCard label="Last 30 Days" value={monthlyApps} />
+        <MetricCard label="Response Rate" value={`${responseRate}%`} />
+        <MetricCard label="Offer Rate" value={`${offerRate}%`} />
       </div>
 
       {/* Charts Row */}
@@ -206,7 +206,7 @@ export default async function AnalyticsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Interview Stats */}
         <div className="card p-6">
-          <h2 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-4">🎤 Interview Performance</h2>
+          <h2 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-4">Interview Performance</h2>
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <span className="text-sm text-zinc-600 dark:text-zinc-400">Total Interviews</span>
@@ -229,7 +229,7 @@ export default async function AnalyticsPage() {
 
         {/* Top Sources */}
         <div className="card p-6">
-          <h2 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-4">🔗 Top Sources</h2>
+          <h2 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-4">Top Sources</h2>
           {sourceStats.length > 0 ? (
             <div className="space-y-3">
               {sourceStats.map((s) => (
@@ -246,7 +246,7 @@ export default async function AnalyticsPage() {
 
         {/* Top Companies */}
         <div className="card p-6">
-          <h2 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-4">🏢 Top Companies</h2>
+          <h2 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-4">Top Companies</h2>
           {topCompanies.length > 0 ? (
             <div className="space-y-3">
               {topCompanies.map((c) => (
@@ -264,7 +264,7 @@ export default async function AnalyticsPage() {
 
       {/* Tips */}
       <div className="card p-6 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-blue-100 dark:border-blue-900/50">
-        <h2 className="font-semibold text-blue-900 dark:text-blue-100 mb-3">💡 Insights</h2>
+        <h2 className="font-semibold text-blue-900 dark:text-blue-100 mb-3">Insights</h2>
         <div className="space-y-2 text-sm text-blue-700 dark:text-blue-300">
           {responseRate < 20 && totalApps > 5 && (
             <p>• Your response rate is below 20%. Consider customizing your resume for each application.</p>
@@ -276,7 +276,7 @@ export default async function AnalyticsPage() {
             <p>• You&apos;re getting interviews! Focus on interview prep to convert them to offers.</p>
           )}
           {(stageMap["OFFER"] ?? 0) > 0 && (
-            <p>• 🎉 Congratulations on your offer(s)! Take time to evaluate and negotiate.</p>
+            <p>• Congratulations on your offer(s)! Take time to evaluate and negotiate.</p>
           )}
           {totalApps === 0 && (
             <p>• Get started by adding your first job application!</p>
@@ -287,10 +287,9 @@ export default async function AnalyticsPage() {
   );
 }
 
-function MetricCard({ label, value, icon }: { label: string; value: string | number; icon: string }) {
+function MetricCard({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="card p-4">
-      <div className="text-2xl mb-2">{icon}</div>
       <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{value}</div>
       <div className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">{label}</div>
     </div>

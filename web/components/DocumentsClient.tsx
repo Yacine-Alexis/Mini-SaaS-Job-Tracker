@@ -25,10 +25,10 @@ type Document = {
 };
 
 const TYPE_LABELS: Record<DocumentType, { label: string; icon: string; color: string }> = {
-  RESUME: { label: "Resume", icon: "📄", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
-  COVER_LETTER: { label: "Cover Letter", icon: "✉️", color: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400" },
-  PORTFOLIO: { label: "Portfolio", icon: "🎨", color: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" },
-  OTHER: { label: "Other", icon: "📎", color: "bg-zinc-100 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-300" },
+  RESUME: { label: "Resume", icon: "", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
+  COVER_LETTER: { label: "Cover Letter", icon: "", color: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400" },
+  PORTFOLIO: { label: "Portfolio", icon: "", color: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" },
+  OTHER: { label: "Other", icon: "", color: "bg-zinc-100 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-300" },
 };
 
 export default function DocumentsClient() {

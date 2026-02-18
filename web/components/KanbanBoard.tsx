@@ -20,12 +20,12 @@ interface KanbanBoardProps {
   onRefresh?: () => void;
 }
 
-const stageConfig: { stage: ApplicationStage; label: string; color: string; bgColor: string; emoji: string }[] = [
-  { stage: "SAVED", label: "Saved", color: "border-zinc-300 dark:border-zinc-600", bgColor: "bg-zinc-50 dark:bg-zinc-800/50", emoji: "📌" },
-  { stage: "APPLIED", label: "Applied", color: "border-blue-300 dark:border-blue-700", bgColor: "bg-blue-50 dark:bg-blue-900/20", emoji: "📤" },
-  { stage: "INTERVIEW", label: "Interview", color: "border-purple-300 dark:border-purple-700", bgColor: "bg-purple-50 dark:bg-purple-900/20", emoji: "🎤" },
-  { stage: "OFFER", label: "Offer", color: "border-green-300 dark:border-green-700", bgColor: "bg-green-50 dark:bg-green-900/20", emoji: "🎉" },
-  { stage: "REJECTED", label: "Rejected", color: "border-red-300 dark:border-red-700", bgColor: "bg-red-50 dark:bg-red-900/20", emoji: "❌" },
+const stageConfig: { stage: ApplicationStage; label: string; color: string; bgColor: string }[] = [
+  { stage: "SAVED", label: "Saved", color: "border-zinc-300 dark:border-zinc-600", bgColor: "bg-zinc-50 dark:bg-zinc-800/50" },
+  { stage: "APPLIED", label: "Applied", color: "border-blue-300 dark:border-blue-700", bgColor: "bg-blue-50 dark:bg-blue-900/20" },
+  { stage: "INTERVIEW", label: "Interview", color: "border-purple-300 dark:border-purple-700", bgColor: "bg-purple-50 dark:bg-purple-900/20" },
+  { stage: "OFFER", label: "Offer", color: "border-green-300 dark:border-green-700", bgColor: "bg-green-50 dark:bg-green-900/20" },
+  { stage: "REJECTED", label: "Rejected", color: "border-red-300 dark:border-red-700", bgColor: "bg-red-50 dark:bg-red-900/20" },
 ];
 
 const stages = stageConfig.map(s => s.stage);
@@ -213,7 +213,7 @@ export function KanbanBoard({ applications, onStageChange, onRefresh }: KanbanBo
         )}
       </div>
 
-      {stageConfig.map(({ stage, label, color, bgColor, emoji }) => (
+      {stageConfig.map(({ stage, label, color, bgColor }) => (
         <div
           key={stage}
           role="listbox"
@@ -232,7 +232,7 @@ export function KanbanBoard({ applications, onStageChange, onRefresh }: KanbanBo
           <div className="p-3 border-b border-zinc-200 dark:border-zinc-700">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-lg" aria-hidden="true">{emoji}</span>
+                <div className={`w-3 h-3 rounded-full ${color.includes('zinc') ? 'bg-zinc-400' : color.includes('blue') ? 'bg-blue-500' : color.includes('purple') ? 'bg-purple-500' : color.includes('green') ? 'bg-green-500' : 'bg-red-400'}`} aria-hidden="true" />
                 <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">{label}</h3>
               </div>
               <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300">
@@ -336,7 +336,7 @@ const KanbanCard = forwardRef<HTMLDivElement, KanbanCardProps>(
           </p>
           {application.location && (
             <p className="text-xs text-zinc-400 dark:text-zinc-500 truncate mt-0.5">
-              📍 {application.location}
+              {application.location}
             </p>
           )}
         </Link>
@@ -371,7 +371,7 @@ interface StageSelectorProps {
 export function StageSelector({ currentStage, onChange, disabled }: StageSelectorProps) {
   return (
     <div className="flex items-center gap-1 p-1 bg-zinc-100 dark:bg-zinc-800 rounded-xl">
-      {stageConfig.map(({ stage, label, emoji }) => (
+      {stageConfig.map(({ stage, label, color }) => (
         <button
           key={stage}
           onClick={() => onChange(stage)}
@@ -385,7 +385,7 @@ export function StageSelector({ currentStage, onChange, disabled }: StageSelecto
             disabled:opacity-50 disabled:cursor-not-allowed
           `}
         >
-          <span>{emoji}</span>
+          <div className={`w-2 h-2 rounded-full ${color.includes('zinc') ? 'bg-zinc-400' : color.includes('blue') ? 'bg-blue-500' : color.includes('purple') ? 'bg-purple-500' : color.includes('green') ? 'bg-green-500' : 'bg-red-400'}`} />
           <span className="hidden sm:inline">{label}</span>
         </button>
       ))}

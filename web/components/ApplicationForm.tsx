@@ -505,9 +505,9 @@ export default function ApplicationForm({ mode, id }: { mode: Mode; id?: string 
             onChange={(v) => set("priority", v as Priority | "")}
             options={[
               { value: "", label: "Select priority..." },
-              { value: Priority.LOW, label: "🟢 Low" },
-              { value: Priority.MEDIUM, label: "🟡 Medium" },
-              { value: Priority.HIGH, label: "🔴 High" }
+              { value: Priority.LOW, label: "Low" },
+              { value: Priority.MEDIUM, label: "Medium" },
+              { value: Priority.HIGH, label: "High" }
             ]}
             isValid={!!form.priority}
           />
@@ -517,9 +517,9 @@ export default function ApplicationForm({ mode, id }: { mode: Mode; id?: string 
             onChange={(v) => set("remoteType", v as RemoteType | "")}
             options={[
               { value: "", label: "Select work type..." },
-              { value: RemoteType.REMOTE, label: "🏠 Remote" },
-              { value: RemoteType.HYBRID, label: "🔀 Hybrid" },
-              { value: RemoteType.ONSITE, label: "🏢 On-site" }
+              { value: RemoteType.REMOTE, label: "Remote" },
+              { value: RemoteType.HYBRID, label: "Hybrid" },
+              { value: RemoteType.ONSITE, label: "On-site" }
             ]}
             isValid={!!form.remoteType}
           />
@@ -792,11 +792,11 @@ function TextareaField({ label, id, value, onChange, onBlur, placeholder, rows =
 
 function formatStage(stage: ApplicationStage): string {
   const labels: Record<ApplicationStage, string> = {
-    SAVED: "📌 Saved",
-    APPLIED: "📤 Applied",
-    INTERVIEW: "🎤 Interview",
-    OFFER: "🎉 Offer",
-    REJECTED: "❌ Rejected"
+    SAVED: "Saved",
+    APPLIED: "Applied",
+    INTERVIEW: "Interview",
+    OFFER: "Offer",
+    REJECTED: "Rejected"
   };
   return labels[stage];
 }

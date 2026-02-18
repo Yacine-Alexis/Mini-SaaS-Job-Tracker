@@ -382,7 +382,7 @@ export default function ImportCsvClient() {
             </div>
             {result.truncated && (
               <div className="text-sm text-amber-600 dark:text-amber-400">
-                ⚠️ Some rows were skipped due to plan limits. Upgrade to Pro for unlimited imports.
+                Some rows were skipped due to plan limits. Upgrade to Pro for unlimited imports.
               </div>
             )}
             {result.failures?.length > 0 && (

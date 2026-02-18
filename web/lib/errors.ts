@@ -38,7 +38,8 @@ export type ApiErrorCode =
   | "ALREADY_REVOKED"
   | "CANNOT_REVOKE_CURRENT"
   // Login related
-  | "ACCOUNT_LOCKED";
+  | "ACCOUNT_LOCKED"
+  | "OAUTH_ONLY";
 
 /**
  * Standard API error response structure.

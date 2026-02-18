@@ -76,12 +76,12 @@ export default function ApplicationDetailsClient({ id }: { id: string }) {
           </div>
 
           <div className="mt-3 flex flex-wrap gap-2 text-sm text-zinc-700 dark:text-zinc-300">
-            {item.location && <span className="badge">📍 {item.location}</span>}
+            {item.location && <span className="badge">{item.location}</span>}
             {item.source && <span className="badge">Source: {item.source}</span>}
             {item.appliedDate && <span className="badge">Applied: {new Date(item.appliedDate).toISOString().slice(0,10)}</span>}
             {(item.salaryMin || item.salaryMax) && (
               <span className="badge">
-                💰 <SalaryDisplay min={item.salaryMin} max={item.salaryMax} />
+                <SalaryDisplay min={item.salaryMin} max={item.salaryMax} />
               </span>
             )}
           </div>

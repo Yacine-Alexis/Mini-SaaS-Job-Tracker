@@ -120,7 +120,7 @@ export default function KeyboardShortcuts() {
       <div className="relative bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-700 w-full max-w-md mx-4 overflow-hidden animate-in zoom-in-95 fade-in duration-200">
         <div className="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">
-            ⌨️ Keyboard Shortcuts
+            Keyboard Shortcuts
           </h2>
           <button
             onClick={() => setShowHelp(false)}

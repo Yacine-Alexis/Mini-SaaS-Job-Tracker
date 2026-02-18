@@ -339,7 +339,7 @@ describe('CommandPalette', () => {
         {
           id: 'custom-cmd',
           label: 'Custom Command',
-          icon: <span>🎯</span>,
+          icon: <svg className="h-4 w-4" />,
           category: 'Custom',
           keywords: ['custom', 'special'],
           action: vi.fn(),
@@ -359,7 +359,7 @@ describe('CommandPalette', () => {
         {
           id: 'custom-cmd',
           label: 'Custom Action',
-          icon: <span>🎯</span>,
+          icon: <svg className="h-4 w-4" />,
           category: 'Custom',
           keywords: ['custom'],
           action: customAction,
@@ -379,7 +379,7 @@ describe('CommandPalette', () => {
         {
           id: 'custom-cmd',
           label: 'Special Feature',
-          icon: <span>🎯</span>,
+          icon: <svg className="h-4 w-4" />,
           category: 'Custom',
           keywords: ['unique', 'special'],
           action: vi.fn(),

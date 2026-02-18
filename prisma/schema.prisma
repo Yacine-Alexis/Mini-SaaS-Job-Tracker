@@ -66,7 +66,9 @@ enum InterviewResult {
 model User {
   id           String           @id @default(cuid())
   email        String           @unique
-  passwordHash String
+  passwordHash String?          // Nullable for OAuth-only users
+  name         String?
+  image        String?
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
   deletedAt    DateTime?
@@ -80,7 +82,8 @@ model User {
   twoFactorSecret      String?  // Encrypted TOTP secret
   twoFactorBackupCodes String[] @default([]) // Hashed backup codes
 
-
+  // OAuth accounts
+  accounts        Account[]
   applications    JobApplication[]
   notes           Note[]
   tasks           Task[]
@@ -96,6 +99,32 @@ model User {
   sessions        UserSession[]
 
   @@index([createdAt])
+}
+
+// OAuth accounts linked to users
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type              String  // "oauth" | "email" | "credentials"
+  provider          String  // "google" | "github" | "credentials"
+  providerAccountId String  // OAuth account ID from provider
+  
+  // OAuth tokens
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
 }
 
 // Active session tracking for security management

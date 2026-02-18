@@ -77,6 +77,11 @@ export async function POST(req: NextRequest) {
     });
   }
 
+  // OAuth-only users cannot login with credentials
+  if (!user.passwordHash) {
+    return jsonError(401, "OAUTH_ONLY", "This account uses social login. Please sign in with Google or GitHub.");
+  }
+
   // Verify password
   const passwordValid = await bcrypt.compare(password, user.passwordHash);
   

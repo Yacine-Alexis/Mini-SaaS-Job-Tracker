@@ -41,10 +41,22 @@ export default function AuthLayout({ children, title, subtitle }: AuthLayoutProp
 
             {/* Features */}
             <div className="space-y-4">
-              <Feature icon="📊" text="Visual pipeline to track every stage" />
-              <Feature icon="🔔" text="Never miss a follow-up with task reminders" />
-              <Feature icon="📈" text="Insights to improve your job search" />
-              <Feature icon="🌙" text="Beautiful dark mode for late-night sessions" />
+              <Feature 
+                icon={<svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>} 
+                text="Visual pipeline to track every stage" 
+              />
+              <Feature 
+                icon={<svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>} 
+                text="Never miss a follow-up with task reminders" 
+              />
+              <Feature 
+                icon={<svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>} 
+                text="Insights to improve your job search" 
+              />
+              <Feature 
+                icon={<svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>} 
+                text="Beautiful dark mode for late-night sessions" 
+              />
             </div>
           </div>
 
@@ -102,10 +114,10 @@ export default function AuthLayout({ children, title, subtitle }: AuthLayoutProp
   );
 }
 
-function Feature({ icon, text }: { icon: string; text: string }) {
+function Feature({ icon, text }: { icon: React.ReactNode; text: string }) {
   return (
     <div className="flex items-center gap-3">
-      <span className="text-2xl">{icon}</span>
+      <div className="h-8 w-8 rounded-lg bg-white/20 flex items-center justify-center text-white">{icon}</div>
       <span className="text-white/90">{text}</span>
     </div>
   );

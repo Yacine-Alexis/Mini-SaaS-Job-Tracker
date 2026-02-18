@@ -7,12 +7,12 @@ interface StageFunnelProps {
   total: number;
 }
 
-const stageConfig: { stage: ApplicationStage; label: string; color: string; bgColor: string; emoji: string }[] = [
-  { stage: "SAVED", label: "Saved", color: "bg-zinc-500", bgColor: "bg-zinc-100 dark:bg-zinc-700", emoji: "📌" },
-  { stage: "APPLIED", label: "Applied", color: "bg-blue-500", bgColor: "bg-blue-100 dark:bg-blue-900/30", emoji: "📤" },
-  { stage: "INTERVIEW", label: "Interview", color: "bg-purple-500", bgColor: "bg-purple-100 dark:bg-purple-900/30", emoji: "🎤" },
-  { stage: "OFFER", label: "Offer", color: "bg-green-500", bgColor: "bg-green-100 dark:bg-green-900/30", emoji: "🎉" },
-  { stage: "REJECTED", label: "Rejected", color: "bg-red-400", bgColor: "bg-red-100 dark:bg-red-900/30", emoji: "❌" },
+const stageConfig: { stage: ApplicationStage; label: string; color: string; bgColor: string }[] = [
+  { stage: "SAVED", label: "Saved", color: "bg-zinc-500", bgColor: "bg-zinc-100 dark:bg-zinc-700" },
+  { stage: "APPLIED", label: "Applied", color: "bg-blue-500", bgColor: "bg-blue-100 dark:bg-blue-900/30" },
+  { stage: "INTERVIEW", label: "Interview", color: "bg-purple-500", bgColor: "bg-purple-100 dark:bg-purple-900/30" },
+  { stage: "OFFER", label: "Offer", color: "bg-green-500", bgColor: "bg-green-100 dark:bg-green-900/30" },
+  { stage: "REJECTED", label: "Rejected", color: "bg-red-400", bgColor: "bg-red-100 dark:bg-red-900/30" },
 ];
 
 export function StageFunnel({ stageCounts, total }: StageFunnelProps) {
@@ -47,7 +47,7 @@ export function StageFunnel({ stageCounts, total }: StageFunnelProps) {
                 style={{ width: `${baseWidth}%` }}
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-lg">{config.emoji}</span>
+                  <div className={`w-3 h-3 rounded-full ${config.color}`} />
                   <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                     {config.label}
                   </span>
@@ -131,7 +131,7 @@ export function StagePipeline({ stageCounts, total }: StageFunnelProps) {
           <div key={config.stage} className="group">
             <div className="flex items-center justify-between text-sm mb-1.5">
               <div className="flex items-center gap-2">
-                <span>{config.emoji}</span>
+                <div className={`w-2 h-2 rounded-full ${config.color}`} />
                 <span className="text-zinc-700 dark:text-zinc-300 font-medium">{config.label}</span>
               </div>
               <div className="flex items-center gap-2">

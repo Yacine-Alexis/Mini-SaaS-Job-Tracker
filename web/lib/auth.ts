@@ -7,6 +7,8 @@ import { getServerSession } from "next-auth";
 import type { NextAuthOptions, User as NextAuthUser } from "next-auth";
 import type { JWT } from "next-auth/jwt";
 import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
+import GitHubProvider from "next-auth/providers/github";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 import { jsonError } from "@/lib/errors";
@@ -60,11 +62,24 @@ export class LoginThrottledError extends Error {
 
 /**
  * NextAuth configuration options.
- * Uses JWT strategy with credentials provider (email/password).
+ * Uses JWT strategy with credentials, Google, and GitHub providers.
  */
 export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
   providers: [
+    // Google OAuth
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID ?? "",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
+      allowDangerousEmailAccountLinking: true,
+    }),
+    // GitHub OAuth
+    GitHubProvider({
+      clientId: process.env.GITHUB_ID ?? "",
+      clientSecret: process.env.GITHUB_SECRET ?? "",
+      allowDangerousEmailAccountLinking: true,
+    }),
+    // Email/Password credentials
     CredentialsProvider({
       name: "Email & Password",
       credentials: {
@@ -114,6 +129,11 @@ export const authOptions: NextAuthOptions = {
             throw new Error(`Invalid credentials. ${result.remainingAttempts} attempts remaining.`);
           }
           return null;
+        }
+
+        // OAuth-only users cannot login with credentials
+        if (!user.passwordHash) {
+          throw new Error("This account uses social login. Please sign in with Google or GitHub.");
         }
 
         const ok = await bcrypt.compare(password, user.passwordHash);
@@ -174,10 +194,85 @@ export const authOptions: NextAuthOptions = {
         session.user.plan = token.plan ?? "FREE";
       }
       return session;
+    },
+    async signIn({ user, account, profile }) {
+      // Handle OAuth sign-in - create or link user
+      if (account && account.provider !== "credentials") {
+        const email = user.email?.toLowerCase().trim();
+        if (!email) return false;
+
+        try {
+          // Check if user exists
+          let dbUser = await prisma.user.findFirst({
+            where: { email, deletedAt: null },
+            include: { accounts: true }
+          });
+
+          if (!dbUser) {
+            // Create new user for OAuth
+            dbUser = await prisma.user.create({
+              data: {
+                email,
+                name: user.name || profile?.name || null,
+                image: user.image || null,
+                passwordHash: null, // OAuth users don't have passwords
+                accounts: {
+                  create: {
+                    type: account.type,
+                    provider: account.provider,
+                    providerAccountId: account.providerAccountId,
+                    access_token: account.access_token,
+                    refresh_token: account.refresh_token,
+                    expires_at: account.expires_at,
+                    token_type: account.token_type,
+                    scope: account.scope,
+                    id_token: account.id_token,
+                    session_state: account.session_state as string | undefined,
+                  }
+                }
+              },
+              include: { accounts: true }
+            });
+          } else {
+            // Check if this OAuth account is already linked
+            const existingAccount = dbUser.accounts.find(
+              a => a.provider === account.provider && a.providerAccountId === account.providerAccountId
+            );
+
+            if (!existingAccount) {
+              // Link new OAuth provider to existing user
+              await prisma.account.create({
+                data: {
+                  userId: dbUser.id,
+                  type: account.type,
+                  provider: account.provider,
+                  providerAccountId: account.providerAccountId,
+                  access_token: account.access_token,
+                  refresh_token: account.refresh_token,
+                  expires_at: account.expires_at,
+                  token_type: account.token_type,
+                  scope: account.scope,
+                  id_token: account.id_token,
+                  session_state: account.session_state as string | undefined,
+                }
+              });
+            }
+          }
+
+          // Set the user ID so JWT callback gets it
+          user.id = dbUser.id;
+          user.plan = dbUser.plan;
+        } catch (error) {
+          console.error("OAuth sign-in error:", error);
+          return false;
+        }
+      }
+      return true;
     }
   },
   pages: {
-    signIn: "/login"
+    signIn: "/login",
+    error: "/auth/error"
   }
 };
 
