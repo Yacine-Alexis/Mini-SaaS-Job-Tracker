@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useCallback } from "react";
 import Link from "next/link";
-import { ApplicationStage } from "@prisma/client";
+import { ApplicationStage, Priority, RemoteType, JobType } from "@prisma/client";
 import { formatDateTime } from "@/lib/dateUtils";
 import { useDebounce } from "@/lib/hooks";
 import { ConfirmModal } from "@/components/ui/Modal";
@@ -14,7 +14,7 @@ type ViewMode = "list" | "board";
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100] as const;
 const DEFAULT_PAGE_SIZE = 20;
 
-type SortField = "company" | "title" | "stage" | "updatedAt" | "appliedDate";
+type SortField = "company" | "title" | "stage" | "updatedAt" | "appliedDate" | "salaryMin" | "salaryMax";
 type SortDir = "asc" | "desc";
 
 type AppItem = {
@@ -27,6 +27,8 @@ type AppItem = {
   tags: string[];
   appliedDate: string | null;
   updatedAt: string;
+  salaryMin?: number | null;
+  salaryMax?: number | null;
 };
 
 // Stage colors for consistent styling
@@ -64,6 +66,13 @@ export default function ApplicationsClient() {
   const [tags, setTags] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  // Advanced filters
+  const [salaryMin, setSalaryMin] = useState("");
+  const [salaryMax, setSalaryMax] = useState("");
+  const [priority, setPriority] = useState<Priority | "">("");
+  const [remoteType, setRemoteType] = useState<RemoteType | "">("");
+  const [jobType, setJobType] = useState<JobType | "">("");
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   // Debounce the search query to avoid excessive API calls
   const debouncedQ = useDebounce(q, 300);
@@ -99,8 +108,14 @@ export default function ApplicationsClient() {
     if (tags.trim()) sp.set("tags", tags.trim());
     if (from) sp.set("from", `${from}T00:00:00`);
     if (to) sp.set("to", `${to}T23:59:59`);
+    // Advanced filters
+    if (salaryMin.trim()) sp.set("salaryMin", salaryMin.trim());
+    if (salaryMax.trim()) sp.set("salaryMax", salaryMax.trim());
+    if (priority) sp.set("priority", priority);
+    if (remoteType) sp.set("remoteType", remoteType);
+    if (jobType) sp.set("jobType", jobType);
     return sp.toString();
-  }, [debouncedQ, stage, tags, from, to, page, pageSize, sortField, sortDir, viewMode]);
+  }, [debouncedQ, stage, tags, from, to, salaryMin, salaryMax, priority, remoteType, jobType, page, pageSize, sortField, sortDir, viewMode]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -397,6 +412,15 @@ export default function ApplicationsClient() {
             <input className="input mt-1" type="date" value={to} onChange={(e) => resetPageAnd(() => setTo(e.target.value))} />
           </div>
           <div className="md:col-span-2 flex gap-2 items-end flex-wrap">
+            <button 
+              className="btn"
+              onClick={() => setShowAdvanced(!showAdvanced)}
+            >
+              <svg className={`h-4 w-4 mr-1.5 transition-transform ${showAdvanced ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+              {showAdvanced ? "Less Filters" : "More Filters"}
+            </button>
             <button className="btn" onClick={() => load()} disabled={loading}>
               <svg className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -405,7 +429,11 @@ export default function ApplicationsClient() {
             </button>
             <button
               className="btn"
-              onClick={() => { setQ(""); setStage(""); setTags(""); setFrom(""); setTo(""); setPage(1); }}
+              onClick={() => { 
+                setQ(""); setStage(""); setTags(""); setFrom(""); setTo(""); 
+                setSalaryMin(""); setSalaryMax(""); setPriority(""); setRemoteType(""); setJobType("");
+                setPage(1); 
+              }}
               disabled={loading}
             >
               Clear
@@ -448,6 +476,73 @@ export default function ApplicationsClient() {
             )}
           </div>
         </div>
+
+        {/* Advanced Filters */}
+        {showAdvanced && (
+          <div className="border-t border-zinc-200 dark:border-zinc-700 pt-3 mt-3">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
+              <div>
+                <label className="text-xs text-zinc-500 dark:text-zinc-400">Min Salary</label>
+                <input 
+                  className="input mt-1" 
+                  type="number" 
+                  placeholder="e.g. 50000"
+                  value={salaryMin} 
+                  onChange={(e) => resetPageAnd(() => setSalaryMin(e.target.value))} 
+                />
+              </div>
+              <div>
+                <label className="text-xs text-zinc-500 dark:text-zinc-400">Max Salary</label>
+                <input 
+                  className="input mt-1" 
+                  type="number" 
+                  placeholder="e.g. 150000"
+                  value={salaryMax} 
+                  onChange={(e) => resetPageAnd(() => setSalaryMax(e.target.value))} 
+                />
+              </div>
+              <div>
+                <label className="text-xs text-zinc-500 dark:text-zinc-400">Priority</label>
+                <select
+                  className="input mt-1"
+                  value={priority}
+                  onChange={(e) => resetPageAnd(() => setPriority(e.target.value as Priority | ""))}
+                >
+                  <option value="">All priorities</option>
+                  {Object.values(Priority).map((p) => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-zinc-500 dark:text-zinc-400">Remote Type</label>
+                <select
+                  className="input mt-1"
+                  value={remoteType}
+                  onChange={(e) => resetPageAnd(() => setRemoteType(e.target.value as RemoteType | ""))}
+                >
+                  <option value="">All types</option>
+                  {Object.values(RemoteType).map((r) => (
+                    <option key={r} value={r}>{r.replace("_", " ")}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-zinc-500 dark:text-zinc-400">Job Type</label>
+                <select
+                  className="input mt-1"
+                  value={jobType}
+                  onChange={(e) => resetPageAnd(() => setJobType(e.target.value as JobType | ""))}
+                >
+                  <option value="">All job types</option>
+                  {Object.values(JobType).map((j) => (
+                    <option key={j} value={j}>{j.replace("_", " ")}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Batch Actions Bar */}

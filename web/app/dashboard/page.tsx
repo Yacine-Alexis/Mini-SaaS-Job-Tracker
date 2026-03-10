@@ -4,6 +4,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import WeeklyBarChart from "@/components/WeeklyBarChart";
 import OnboardingCard from "@/components/OnboardingCard";
+import { AIInsightsCard, AISmartSummary } from "@/components/ai";
 
 function startOfISOWeek(d: Date) {
   const date = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
@@ -182,6 +183,9 @@ export default async function DashboardPage() {
 
       {isEmpty && <OnboardingCard />}
 
+      {/* AI Smart Summary */}
+      {!isEmpty && <AISmartSummary />}
+
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column - Chart & Pipeline */}
@@ -353,27 +357,8 @@ export default async function DashboardPage() {
             )}
           </div>
 
-          {/* Insights Card */}
-          <div className="card p-6 bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-950/30 dark:to-blue-950/30 border-indigo-100 dark:border-indigo-900/50">
-            <h2 className="font-semibold text-indigo-900 dark:text-indigo-100 mb-3">Quick Insights</h2>
-            <div className="space-y-2 text-sm text-indigo-700 dark:text-indigo-300">
-              {avgSalary > 0 && (
-                <p>• Avg. target salary: <span className="font-semibold">${avgSalary.toLocaleString()}</span></p>
-              )}
-              {appliedLike > 0 && (
-                <p>• You&apos;ve applied to <span className="font-semibold">{appliedLike}</span> positions</p>
-              )}
-              {(stageCounts["OFFER"] ?? 0) > 0 && (
-                <p>• You have <span className="font-semibold">{stageCounts["OFFER"]}</span> active offer(s)!</p>
-              )}
-              {total === 0 && (
-                <p>• Start by adding your first job application!</p>
-              )}
-              {total > 0 && responseRate < 20 && (
-                <p>• Tip: Consider tailoring your resume for each application</p>
-              )}
-            </div>
-          </div>
+          {/* AI Insights Card */}
+          <AIInsightsCard />
         </div>
       </div>
 

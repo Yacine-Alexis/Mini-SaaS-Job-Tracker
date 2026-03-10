@@ -39,7 +39,10 @@ export type ApiErrorCode =
   | "CANNOT_REVOKE_CURRENT"
   // Login related
   | "ACCOUNT_LOCKED"
-  | "OAUTH_ONLY";
+  | "OAUTH_ONLY"
+  // AI related
+  | "AI_ERROR"
+  | "INVALID_TYPE";
 
 /**
  * Standard API error response structure.

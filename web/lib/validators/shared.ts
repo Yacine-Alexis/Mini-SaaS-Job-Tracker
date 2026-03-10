@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Prisma, ApplicationStage } from "@prisma/client";
+import { Prisma, ApplicationStage, Priority, RemoteType, JobType } from "@prisma/client";
 
 /**
  * Shared query schema for listing items by applicationId
@@ -21,6 +21,11 @@ export function buildApplicationFilter(opts: {
   tags?: string[];
   from?: string;
   to?: string;
+  salaryMin?: number;
+  salaryMax?: number;
+  priority?: Priority;
+  remoteType?: RemoteType;
+  jobType?: JobType;
 }): JobApplicationWhereInput {
   const where: JobApplicationWhereInput = {
     userId: opts.userId,
@@ -47,6 +52,49 @@ export function buildApplicationFilter(opts: {
     where.appliedDate = {};
     if (opts.from) where.appliedDate.gte = new Date(opts.from);
     if (opts.to) where.appliedDate.lte = new Date(opts.to);
+  }
+
+  // Salary range filter - find applications where salary overlaps with filter range
+  if (opts.salaryMin !== undefined || opts.salaryMax !== undefined) {
+    // Match if application's salary range overlaps with the filter range
+    // An application matches if: app.salaryMax >= filter.salaryMin AND app.salaryMin <= filter.salaryMax
+    const salaryConditions: Prisma.JobApplicationWhereInput[] = [];
+    
+    if (opts.salaryMin !== undefined) {
+      // Application's max salary should be >= our min filter (or null for unknown)
+      salaryConditions.push({
+        OR: [
+          { salaryMax: { gte: opts.salaryMin } },
+          { salaryMin: { gte: opts.salaryMin } }
+        ]
+      });
+    }
+    
+    if (opts.salaryMax !== undefined) {
+      // Application's min salary should be <= our max filter (or null for unknown)
+      salaryConditions.push({
+        OR: [
+          { salaryMin: { lte: opts.salaryMax } },
+          { salaryMax: { lte: opts.salaryMax } }
+        ]
+      });
+    }
+    
+    if (salaryConditions.length > 0) {
+      where.AND = salaryConditions;
+    }
+  }
+
+  if (opts.priority) {
+    where.priority = opts.priority;
+  }
+
+  if (opts.remoteType) {
+    where.remoteType = opts.remoteType;
+  }
+
+  if (opts.jobType) {
+    where.jobType = opts.jobType;
   }
 
   return where;

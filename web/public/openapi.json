@@ -23,10 +23,17 @@
     { "name": "Tasks", "description": "Tasks/todos for applications" },
     { "name": "Contacts", "description": "Contacts related to applications" },
     { "name": "Attachment Links", "description": "External links attached to applications" },
+    { "name": "Interviews", "description": "Interview scheduling and tracking" },
+    { "name": "Documents", "description": "Resume, cover letter, and document management" },
+    { "name": "Labels", "description": "Custom labels for organizing applications" },
+    { "name": "Salary Offers", "description": "Salary offer tracking and negotiation" },
     { "name": "Dashboard", "description": "Dashboard statistics" },
     { "name": "Auth", "description": "Authentication endpoints" },
     { "name": "Account", "description": "Account management" },
-    { "name": "Billing", "description": "Billing and subscription management" }
+    { "name": "Sessions", "description": "Session management and 2FA" },
+    { "name": "Email Preferences", "description": "Email notification settings" },
+    { "name": "Billing", "description": "Billing and subscription management" },
+    { "name": "AI", "description": "AI-powered features" }
   ],
   "paths": {
     "/applications": {
@@ -46,10 +53,10 @@
             "description": "Filter by application stage"
           },
           {
-            "name": "search",
+            "name": "q",
             "in": "query",
-            "schema": { "type": "string" },
-            "description": "Search in company name and job title"
+            "schema": { "type": "string", "maxLength": 200 },
+            "description": "Search in company name, job title, and location"
           },
           {
             "name": "tags",
@@ -58,16 +65,46 @@
             "description": "Comma-separated tags to filter by"
           },
           {
-            "name": "dateFrom",
+            "name": "from",
             "in": "query",
-            "schema": { "type": "string", "format": "date" },
-            "description": "Filter applications created after this date"
+            "schema": { "type": "string", "format": "date-time" },
+            "description": "Filter applications applied after this date"
           },
           {
-            "name": "dateTo",
+            "name": "to",
             "in": "query",
-            "schema": { "type": "string", "format": "date" },
-            "description": "Filter applications created before this date"
+            "schema": { "type": "string", "format": "date-time" },
+            "description": "Filter applications applied before this date"
+          },
+          {
+            "name": "salaryMin",
+            "in": "query",
+            "schema": { "type": "integer", "minimum": 0 },
+            "description": "Minimum salary filter"
+          },
+          {
+            "name": "salaryMax",
+            "in": "query",
+            "schema": { "type": "integer", "minimum": 0 },
+            "description": "Maximum salary filter"
+          },
+          {
+            "name": "priority",
+            "in": "query",
+            "schema": { "$ref": "#/components/schemas/Priority" },
+            "description": "Filter by priority level"
+          },
+          {
+            "name": "remoteType",
+            "in": "query",
+            "schema": { "$ref": "#/components/schemas/RemoteType" },
+            "description": "Filter by remote type"
+          },
+          {
+            "name": "jobType",
+            "in": "query",
+            "schema": { "$ref": "#/components/schemas/JobType" },
+            "description": "Filter by job type"
           }
         ],
         "responses": {
@@ -806,6 +843,796 @@
           "401": { "$ref": "#/components/responses/Unauthorized" }
         }
       }
+    },
+    "/interviews": {
+      "get": {
+        "tags": ["Interviews"],
+        "summary": "List interviews",
+        "description": "Get interviews, optionally filtered by application or date range",
+        "parameters": [
+          {
+            "name": "applicationId",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Filter by application ID"
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": { "type": "string", "format": "date-time" },
+            "description": "Start of date range"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": { "type": "string", "format": "date-time" },
+            "description": "End of date range"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of interviews",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Interview" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "post": {
+        "tags": ["Interviews"],
+        "summary": "Create interview",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateInterview" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Interview created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "item": { "$ref": "#/components/schemas/Interview" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "patch": {
+        "tags": ["Interviews"],
+        "summary": "Update interview",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateInterview" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Interview updated" },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Interviews"],
+        "summary": "Delete interview",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Interview deleted" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/documents": {
+      "get": {
+        "tags": ["Documents"],
+        "summary": "List documents",
+        "description": "Get user's documents (resumes, cover letters, etc.)",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "schema": { "$ref": "#/components/schemas/DocumentType" },
+            "description": "Filter by document type"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of documents",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Document" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "post": {
+        "tags": ["Documents"],
+        "summary": "Create document",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateDocument" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Document created" },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "patch": {
+        "tags": ["Documents"],
+        "summary": "Update document",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateDocument" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Document updated" },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Documents"],
+        "summary": "Delete document",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Document deleted" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/labels": {
+      "get": {
+        "tags": ["Labels"],
+        "summary": "List labels",
+        "description": "Get user's custom labels",
+        "responses": {
+          "200": {
+            "description": "List of labels",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Label" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "post": {
+        "tags": ["Labels"],
+        "summary": "Create label",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateLabel" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Label created" },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "409": { "description": "Label name already exists" }
+        }
+      },
+      "patch": {
+        "tags": ["Labels"],
+        "summary": "Update label",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateLabel" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Label updated" },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Labels"],
+        "summary": "Delete label",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Label deleted" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/salary-offers": {
+      "get": {
+        "tags": ["Salary Offers"],
+        "summary": "List salary offers",
+        "description": "Get salary offers for an application",
+        "parameters": [
+          {
+            "name": "applicationId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Application ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of salary offers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/SalaryOffer" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "post": {
+        "tags": ["Salary Offers"],
+        "summary": "Create salary offer",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateSalaryOffer" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Salary offer created" },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "patch": {
+        "tags": ["Salary Offers"],
+        "summary": "Update salary offer",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateSalaryOffer" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Salary offer updated" },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Salary Offers"],
+        "summary": "Delete salary offer",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Salary offer deleted" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/email-preferences": {
+      "get": {
+        "tags": ["Email Preferences"],
+        "summary": "Get email preferences",
+        "responses": {
+          "200": {
+            "description": "Email preferences",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EmailPreferences" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "patch": {
+        "tags": ["Email Preferences"],
+        "summary": "Update email preferences",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateEmailPreferences" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Preferences updated" },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/sessions": {
+      "get": {
+        "tags": ["Sessions"],
+        "summary": "List active sessions",
+        "description": "Get all active sessions for the authenticated user",
+        "responses": {
+          "200": {
+            "description": "List of sessions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "sessions": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Session" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "delete": {
+        "tags": ["Sessions"],
+        "summary": "Revoke session",
+        "description": "Revoke a specific session or all other sessions",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Session ID to revoke. Omit to revoke all other sessions."
+          }
+        ],
+        "responses": {
+          "200": { "description": "Session(s) revoked" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/account/2fa/setup": {
+      "post": {
+        "tags": ["Sessions"],
+        "summary": "Enable 2FA",
+        "description": "Generate a TOTP secret and QR code for 2FA setup",
+        "responses": {
+          "200": {
+            "description": "2FA setup data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "secret": { "type": "string" },
+                    "qrCode": { "type": "string", "description": "Data URL for QR code" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/account/2fa/verify": {
+      "post": {
+        "tags": ["Sessions"],
+        "summary": "Verify and activate 2FA",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["code"],
+                "properties": {
+                  "code": { "type": "string", "minLength": 6, "maxLength": 6 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "2FA enabled successfully" },
+          "400": { "description": "Invalid verification code" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/account/2fa/disable": {
+      "post": {
+        "tags": ["Sessions"],
+        "summary": "Disable 2FA",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["code"],
+                "properties": {
+                  "code": { "type": "string", "minLength": 6, "maxLength": 6 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "2FA disabled" },
+          "400": { "description": "Invalid code" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/ai/tags": {
+      "post": {
+        "tags": ["AI"],
+        "summary": "Suggest tags (Pro only)",
+        "description": "AI-powered tag suggestions based on job application data",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["company", "title"],
+                "properties": {
+                  "company": { "type": "string" },
+                  "title": { "type": "string" },
+                  "description": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tag suggestions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "tags": {
+                      "type": "array",
+                      "items": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/ProRequired" }
+        }
+      }
+    },
+    "/ai/interview-questions": {
+      "post": {
+        "tags": ["AI"],
+        "summary": "Generate interview questions (Pro only)",
+        "description": "AI-generated interview questions based on job details",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["company", "title"],
+                "properties": {
+                  "company": { "type": "string" },
+                  "title": { "type": "string" },
+                  "description": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Interview questions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "questions": {
+                      "type": "array",
+                      "items": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/ProRequired" }
+        }
+      }
+    },
+    "/ai/recommendations": {
+      "get": {
+        "tags": ["AI"],
+        "summary": "Get job recommendations (Pro only)",
+        "description": "AI-powered job recommendations based on application history",
+        "responses": {
+          "200": {
+            "description": "Job recommendations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "recommendations": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string" },
+                          "company": { "type": "string" },
+                          "title": { "type": "string" },
+                          "score": { "type": "number" },
+                          "reason": { "type": "string" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/ProRequired" }
+        }
+      }
+    },
+    "/ai/assistant": {
+      "get": {
+        "tags": ["AI"],
+        "summary": "Get quick insights",
+        "description": "Get quick AI-generated insights about the user's job search progress",
+        "responses": {
+          "200": {
+            "description": "Quick insights",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "insights": {
+                      "type": "array",
+                      "items": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "post": {
+        "tags": ["AI"],
+        "summary": "Ask AI assistant",
+        "description": "Ask the AI assistant questions about job search, get recommendations, tips, and insights based on your application history",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["query"],
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1000,
+                    "description": "Natural language question to ask the assistant",
+                    "example": "Where should I apply?"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "AI assistant response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "description": "Main response message"
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": ["text", "insights", "jobs", "tips", "greeting"],
+                      "description": "Type of response for UI rendering"
+                    },
+                    "suggestions": {
+                      "type": "array",
+                      "items": { "type": "string" },
+                      "description": "Follow-up suggestions or tips"
+                    },
+                    "resources": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": { "type": "string" },
+                          "url": { "type": "string", "format": "uri" },
+                          "specialty": { "type": "string" }
+                        }
+                      },
+                      "description": "Recommended job boards or resources"
+                    },
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "description": "Additional data for insights display"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": ["Account"],
+        "summary": "Health check",
+        "description": "Check API health status",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "API is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "ok" },
+                    "timestamp": { "type": "string", "format": "date-time" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -821,6 +1648,200 @@
       "Plan": {
         "type": "string",
         "enum": ["FREE", "PRO"]
+      },
+      "InterviewType": {
+        "type": "string",
+        "enum": ["PHONE", "VIDEO", "ONSITE", "TECHNICAL", "BEHAVIORAL", "OTHER"]
+      },
+      "InterviewResult": {
+        "type": "string",
+        "enum": ["PENDING", "PASSED", "FAILED", "CANCELLED"]
+      },
+      "DocumentType": {
+        "type": "string",
+        "enum": ["RESUME", "COVER_LETTER", "PORTFOLIO", "REFERENCE", "OTHER"]
+      },
+      "OfferType": {
+        "type": "string",
+        "enum": ["INITIAL", "COUNTER", "FINAL"]
+      },
+      "Priority": {
+        "type": "string",
+        "enum": ["LOW", "MEDIUM", "HIGH"]
+      },
+      "RemoteType": {
+        "type": "string",
+        "enum": ["ONSITE", "HYBRID", "REMOTE"]
+      },
+      "JobType": {
+        "type": "string",
+        "enum": ["FULL_TIME", "PART_TIME", "CONTRACT", "INTERNSHIP", "FREELANCE"]
+      },
+      "Interview": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "applicationId": { "type": "string" },
+          "scheduledAt": { "type": "string", "format": "date-time" },
+          "type": { "$ref": "#/components/schemas/InterviewType" },
+          "location": { "type": "string", "nullable": true },
+          "interviewerName": { "type": "string", "nullable": true },
+          "notes": { "type": "string", "nullable": true },
+          "result": { "$ref": "#/components/schemas/InterviewResult" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CreateInterview": {
+        "type": "object",
+        "required": ["applicationId", "scheduledAt", "type"],
+        "properties": {
+          "applicationId": { "type": "string" },
+          "scheduledAt": { "type": "string", "format": "date-time" },
+          "type": { "$ref": "#/components/schemas/InterviewType" },
+          "location": { "type": "string" },
+          "interviewerName": { "type": "string" },
+          "notes": { "type": "string" }
+        }
+      },
+      "UpdateInterview": {
+        "type": "object",
+        "properties": {
+          "scheduledAt": { "type": "string", "format": "date-time" },
+          "type": { "$ref": "#/components/schemas/InterviewType" },
+          "location": { "type": "string" },
+          "interviewerName": { "type": "string" },
+          "notes": { "type": "string" },
+          "result": { "$ref": "#/components/schemas/InterviewResult" }
+        }
+      },
+      "Document": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "type": { "$ref": "#/components/schemas/DocumentType" },
+          "content": { "type": "string" },
+          "isDefault": { "type": "boolean" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CreateDocument": {
+        "type": "object",
+        "required": ["name", "type", "content"],
+        "properties": {
+          "name": { "type": "string", "maxLength": 255 },
+          "type": { "$ref": "#/components/schemas/DocumentType" },
+          "content": { "type": "string" },
+          "isDefault": { "type": "boolean", "default": false }
+        }
+      },
+      "UpdateDocument": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "maxLength": 255 },
+          "type": { "$ref": "#/components/schemas/DocumentType" },
+          "content": { "type": "string" },
+          "isDefault": { "type": "boolean" }
+        }
+      },
+      "Label": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "color": { "type": "string", "description": "Hex color code" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CreateLabel": {
+        "type": "object",
+        "required": ["name", "color"],
+        "properties": {
+          "name": { "type": "string", "maxLength": 50 },
+          "color": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" }
+        }
+      },
+      "UpdateLabel": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "maxLength": 50 },
+          "color": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" }
+        }
+      },
+      "SalaryOffer": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "applicationId": { "type": "string" },
+          "type": { "$ref": "#/components/schemas/OfferType" },
+          "baseSalary": { "type": "integer" },
+          "bonus": { "type": "integer", "nullable": true },
+          "equity": { "type": "string", "nullable": true },
+          "benefits": { "type": "string", "nullable": true },
+          "notes": { "type": "string", "nullable": true },
+          "offeredAt": { "type": "string", "format": "date-time" },
+          "expiresAt": { "type": "string", "format": "date-time", "nullable": true },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CreateSalaryOffer": {
+        "type": "object",
+        "required": ["applicationId", "baseSalary"],
+        "properties": {
+          "applicationId": { "type": "string" },
+          "type": { "$ref": "#/components/schemas/OfferType" },
+          "baseSalary": { "type": "integer", "minimum": 0 },
+          "bonus": { "type": "integer", "minimum": 0 },
+          "equity": { "type": "string" },
+          "benefits": { "type": "string" },
+          "notes": { "type": "string" },
+          "offeredAt": { "type": "string", "format": "date-time" },
+          "expiresAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "UpdateSalaryOffer": {
+        "type": "object",
+        "properties": {
+          "type": { "$ref": "#/components/schemas/OfferType" },
+          "baseSalary": { "type": "integer", "minimum": 0 },
+          "bonus": { "type": "integer", "minimum": 0 },
+          "equity": { "type": "string" },
+          "benefits": { "type": "string" },
+          "notes": { "type": "string" },
+          "offeredAt": { "type": "string", "format": "date-time" },
+          "expiresAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "EmailPreferences": {
+        "type": "object",
+        "properties": {
+          "interviewReminders": { "type": "boolean" },
+          "taskReminders": { "type": "boolean" },
+          "weeklyDigest": { "type": "boolean" },
+          "marketingEmails": { "type": "boolean" }
+        }
+      },
+      "UpdateEmailPreferences": {
+        "type": "object",
+        "properties": {
+          "interviewReminders": { "type": "boolean" },
+          "taskReminders": { "type": "boolean" },
+          "weeklyDigest": { "type": "boolean" },
+          "marketingEmails": { "type": "boolean" }
+        }
+      },
+      "Session": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "userAgent": { "type": "string" },
+          "ipAddress": { "type": "string" },
+          "lastActiveAt": { "type": "string", "format": "date-time" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "isCurrent": { "type": "boolean" }
+        }
       },
       "JobApplication": {
         "type": "object",

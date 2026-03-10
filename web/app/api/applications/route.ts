@@ -28,13 +28,18 @@ export async function GET(req: NextRequest) {
     tags: url.searchParams.get("tags") ?? undefined,
     from: url.searchParams.get("from") ?? undefined,
     to: url.searchParams.get("to") ?? undefined,
+    salaryMin: url.searchParams.get("salaryMin") ?? undefined,
+    salaryMax: url.searchParams.get("salaryMax") ?? undefined,
+    priority: url.searchParams.get("priority") ?? undefined,
+    remoteType: url.searchParams.get("remoteType") ?? undefined,
+    jobType: url.searchParams.get("jobType") ?? undefined,
     sortBy: url.searchParams.get("sortBy") ?? undefined,
     sortDir: url.searchParams.get("sortDir") ?? undefined
   });
   if (!qParsed.success) return jsonError(400, "VALIDATION_ERROR", "Invalid filters", zodToDetails(qParsed.error));
 
   const { skip, take } = toSkipTake(pParsed.data);
-  const { stage, q, tags, from, to, sortBy, sortDir } = qParsed.data;
+  const { stage, q, tags, from, to, salaryMin, salaryMax, priority, remoteType, jobType, sortBy, sortDir } = qParsed.data;
 
   const tagList =
     tags?.split(",").map((t) => t.trim()).filter(Boolean) ?? [];
@@ -46,7 +51,12 @@ export async function GET(req: NextRequest) {
     q,
     tags: tagList.length > 0 ? tagList : undefined,
     from,
-    to
+    to,
+    salaryMin,
+    salaryMax,
+    priority,
+    remoteType,
+    jobType
   });
 
   // Build orderBy from sort parameters (default: updatedAt desc)

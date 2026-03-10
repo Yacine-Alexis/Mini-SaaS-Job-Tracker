@@ -8,6 +8,7 @@ import UserPlanBadge from "@/components/UserPlanBadge";
 import DarkModeToggle from "@/components/DarkModeToggle";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import { ServicesDropdown, UserMenu, Footer } from "@/components/layout";
+import { AIAssistant } from "@/components/ai";
 import {
   DashboardIcon,
   ApplicationsIcon,
@@ -210,6 +211,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Footer */}
       <Footer />
+
+      {/* Floating AI Assistant */}
+      <AIAssistant />
     </div>
   );
 }

@@ -55,6 +55,11 @@ export const applicationListQuerySchema = z.object({
   tags: z.string().max(500).optional(), // comma-separated, limit length
   from: z.string().datetime().optional(), // appliedDate from
   to: z.string().datetime().optional(), // appliedDate to
-  sortBy: z.enum(["company", "title", "stage", "updatedAt", "appliedDate", "createdAt"]).optional(),
+  salaryMin: z.coerce.number().int().min(0).optional(), // minimum salary filter
+  salaryMax: z.coerce.number().int().min(0).optional(), // maximum salary filter
+  priority: z.nativeEnum(Priority).optional(),
+  remoteType: z.nativeEnum(RemoteType).optional(),
+  jobType: z.nativeEnum(JobType).optional(),
+  sortBy: z.enum(["company", "title", "stage", "updatedAt", "appliedDate", "createdAt", "salaryMin", "salaryMax"]).optional(),
   sortDir: z.enum(["asc", "desc"]).optional()
 });

@@ -448,6 +448,14 @@ enum AuditAction {
   EXPORT_CSV
   BILLING_UPGRADED
   BILLING_DOWNGRADED
+  // AI-related actions
+  AI_TAGS_SUGGESTED
+  AI_RESUME_MATCHED
+  AI_INTERVIEW_QUESTIONS_GENERATED
+  AI_COVER_LETTER_GENERATED
+  AI_SALARY_ESTIMATED
+  AI_INSIGHTS_VIEWED
+  AI_FEEDBACK_SUBMITTED
 }
 
 model AuditLog {
@@ -513,4 +521,60 @@ model EmailPreferences {
   updatedAt               DateTime         @updatedAt
 
   @@index([userId])
+}
+
+// AI Training Data - Stores user feedback for improving AI suggestions
+enum AIFeatureType {
+  TAG_SUGGESTION
+  RESUME_MATCH
+  INTERVIEW_QUESTIONS
+  COVER_LETTER
+  SALARY_ESTIMATE
+  FOLLOW_UP_TIMING
+}
+
+model AIFeedback {
+  id            String        @id @default(cuid())
+  userId        String
+  featureType   AIFeatureType
+  
+  // Context that generated the suggestion
+  inputText     String?       @db.Text   // Job description, resume, etc.
+  context       Json?                     // Additional context as JSON
+  
+  // The suggestion that was made
+  suggestion    String                    // The AI-generated suggestion
+  
+  // User feedback
+  accepted      Boolean                   // Did user accept/use the suggestion?
+  rating        Int?                      // Optional 1-5 rating
+  feedback      String?                   // Optional text feedback
+  correctedTo   String?                   // What the user changed it to (if applicable)
+  
+  createdAt     DateTime      @default(now())
+  
+  @@index([userId, featureType])
+  @@index([featureType, accepted])
+  @@index([createdAt])
+}
+
+// AI Model Cache - Stores trained model data for persistence
+model AIModelCache {
+  id            String        @id @default(cuid())
+  modelType     String                    // e.g., "tag_classifier", "interview_classifier"
+  userId        String?                   // null = global model, set = user-specific
+  
+  // Serialized model data
+  modelData     Json                      // Trained model parameters as JSON
+  version       Int           @default(1)
+  
+  // Performance metrics
+  accuracy      Float?
+  sampleCount   Int           @default(0) // Number of training samples
+  
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  
+  @@unique([modelType, userId])
+  @@index([modelType])
 }

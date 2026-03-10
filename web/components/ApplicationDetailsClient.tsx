@@ -12,6 +12,7 @@ import TimelinePanel from "@/components/TimelinePanel";
 import SalaryOffersPanel from "@/components/SalaryOffersPanel";
 import StageProgressIndicator from "@/components/StageProgressIndicator";
 import SalaryDisplay, { SalaryRangeBar } from "@/components/SalaryDisplay";
+import { AIToolsPanel, AIContextualTip } from "@/components/ai";
 import { ApplicationStage } from "@prisma/client";
 
 type AppItem = {
@@ -27,6 +28,7 @@ type AppItem = {
   salaryMin: number | null;
   salaryMax: number | null;
   updatedAt: string;
+  description: string | null;
 };
 
 export default function ApplicationDetailsClient({ id }: { id: string }) {
@@ -111,6 +113,13 @@ export default function ApplicationDetailsClient({ id }: { id: string }) {
 
       <ApplicationQuickEdit item={item} onUpdated={load} />
 
+      {/* AI Contextual Tip */}
+      <AIContextualTip
+        stage={item.stage}
+        company={item.company}
+        appliedDate={item.appliedDate}
+      />
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <NotesPanel applicationId={id} />
         <TasksPanel applicationId={id} />
@@ -120,6 +129,15 @@ export default function ApplicationDetailsClient({ id }: { id: string }) {
         <AttachmentLinksPanel applicationId={id} />
         <TimelinePanel applicationId={id} />
       </div>
+
+      {/* AI Tools Panel */}
+      <AIToolsPanel
+        jobDescription={item.description || ""}
+        jobTitle={item.title}
+        company={item.company}
+        location={item.location || undefined}
+        selectedTags={item.tags}
+      />
 
     </div>
   );

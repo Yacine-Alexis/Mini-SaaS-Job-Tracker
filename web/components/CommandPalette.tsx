@@ -15,6 +15,11 @@ import {
   SearchIcon,
   LogoutIcon,
 } from "@/components/icons";
+import {
+  SparklesIcon,
+  SpinnerIcon,
+  ExternalLinkIcon,
+} from "@/components/icons";
 
 interface CommandItem {
   id: string;
@@ -31,10 +36,28 @@ interface CommandPaletteProps {
   additionalCommands?: CommandItem[];
 }
 
+interface AIResponse {
+  message: string;
+  suggestions?: string[];
+  resources?: { name: string; url: string; specialty: string }[];
+  type: string;
+}
+
+// Detect if query is an AI question
+function isAIQuery(q: string): boolean {
+  const trimmed = q.trim();
+  if (trimmed.startsWith("?") || trimmed.startsWith("ask ")) return true;
+  if (/^(where|how|what|why|should|can|help|find|suggest|recommend)/i.test(trimmed)) return true;
+  return false;
+}
+
 export default function CommandPalette({ additionalCommands = [] }: CommandPaletteProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [aiMode, setAiMode] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiResponse, setAiResponse] = useState<AIResponse | null>(null);
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -44,6 +67,27 @@ export default function CommandPalette({ additionalCommands = [] }: CommandPalet
     document.documentElement.classList.toggle("dark");
     const isDark = document.documentElement.classList.contains("dark");
     localStorage.setItem("theme", isDark ? "dark" : "light");
+  }, []);
+
+  // AI query handler
+  const askAI = useCallback(async (question: string) => {
+    setAiMode(true);
+    setAiLoading(true);
+    setAiResponse(null);
+
+    try {
+      const res = await fetch("/api/ai/assistant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: question.replace(/^\?|^ask /i, "").trim() }),
+      });
+      const data: AIResponse = await res.json();
+      setAiResponse(data);
+    } catch {
+      setAiResponse({ message: "Sorry, I couldn't process that. Try again.", type: "error" });
+    } finally {
+      setAiLoading(false);
+    }
   }, []);
 
   // Built-in commands
@@ -115,6 +159,19 @@ export default function CommandPalette({ additionalCommands = [] }: CommandPalet
       category: "Preferences",
       keywords: ["theme", "light", "dark", "appearance"],
     },
+    {
+      id: "ask-ai",
+      label: "Ask AI Assistant",
+      description: "Ask questions about your job search",
+      icon: <SparklesIcon className="h-4 w-4" />,
+      shortcut: "?",
+      action: () => {
+        setQuery("? ");
+        setAiMode(true);
+      },
+      category: "AI",
+      keywords: ["help", "question", "assistant", "insights", "jobs", "where to apply"],
+    },
   ], [router, toggleDarkMode]);
 
   const allCommands = useMemo(() => [...builtInCommands, ...additionalCommands], [builtInCommands, additionalCommands]);
@@ -159,6 +216,9 @@ export default function CommandPalette({ additionalCommands = [] }: CommandPalet
     setOpen(false);
     setQuery("");
     setSelectedIndex(0);
+    setAiMode(false);
+    setAiResponse(null);
+    setAiLoading(false);
   }, []);
 
   // Execute selected command
@@ -194,21 +254,32 @@ export default function CommandPalette({ additionalCommands = [] }: CommandPalet
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "ArrowDown") {
         e.preventDefault();
-        setSelectedIndex((i) => Math.min(i + 1, flatCommands.length - 1));
+        if (!aiMode) {
+          setSelectedIndex((i) => Math.min(i + 1, flatCommands.length - 1));
+        }
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
-        setSelectedIndex((i) => Math.max(i - 1, 0));
+        if (!aiMode) {
+          setSelectedIndex((i) => Math.max(i - 1, 0));
+        }
       } else if (e.key === "Enter") {
         e.preventDefault();
-        if (flatCommands[selectedIndex]) {
+        // Check if this is an AI query
+        if (isAIQuery(query) && query.length > 2) {
+          askAI(query);
+        } else if (flatCommands[selectedIndex]) {
           executeCommand(flatCommands[selectedIndex]);
         }
+      } else if (e.key === "Backspace" && aiMode && query.length <= 2) {
+        // Exit AI mode when backspacing
+        setAiMode(false);
+        setAiResponse(null);
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [open, selectedIndex, flatCommands, executeCommand]);
+  }, [open, selectedIndex, flatCommands, executeCommand, aiMode, query, askAI]);
 
   // Focus input when opened
   useEffect(() => {
@@ -220,6 +291,13 @@ export default function CommandPalette({ additionalCommands = [] }: CommandPalet
   // Reset selection when query changes
   useEffect(() => {
     setSelectedIndex(0);
+    // Auto-detect AI mode
+    if (isAIQuery(query)) {
+      setAiMode(true);
+    } else if (!query.startsWith("?")) {
+      setAiMode(false);
+      setAiResponse(null);
+    }
   }, [query]);
 
   // Scroll selected item into view
@@ -252,17 +330,78 @@ export default function CommandPalette({ additionalCommands = [] }: CommandPalet
         >
           {/* Search Input */}
           <div className="flex items-center gap-3 px-4 border-b border-zinc-200 dark:border-zinc-700">
-            <SearchIcon className="h-5 w-5 text-zinc-400" />
+            {aiMode ? (
+              <SparklesIcon className="h-5 w-5 text-purple-500" />
+            ) : (
+              <SearchIcon className="h-5 w-5 text-zinc-400" />
+            )}
             <input
               ref={inputRef}
               type="text"
               className="flex-1 py-4 bg-transparent text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none"
-              placeholder="Type a command or search..."
+              placeholder={aiMode ? "Ask me anything about your job search..." : "Type a command or search... (? to ask AI)"}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
             <KeyboardShortcutHint keys="Esc" />
           </div>
+
+          {/* AI Response Area */}
+          {aiMode && (aiLoading || aiResponse) && (
+            <div className="p-4 border-b border-zinc-200 dark:border-zinc-700 bg-gradient-to-r from-blue-500/5 to-purple-500/5">
+              {aiLoading ? (
+                <div className="flex items-center gap-3 text-zinc-500 dark:text-zinc-400">
+                  <SpinnerIcon className="h-4 w-4 animate-spin" />
+                  <span>Thinking...</span>
+                </div>
+              ) : aiResponse && (
+                <div className="space-y-3">
+                  <p className="text-zinc-800 dark:text-zinc-200 text-sm whitespace-pre-wrap">
+                    {aiResponse.message}
+                  </p>
+                  
+                  {/* Resources (job boards) */}
+                  {aiResponse.resources && aiResponse.resources.length > 0 && (
+                    <div className="grid grid-cols-2 gap-2">
+                      {aiResponse.resources.slice(0, 6).map((resource, i) => (
+                        <a
+                          key={i}
+                          href={resource.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:border-blue-500 transition-colors text-sm group"
+                        >
+                          <ExternalLinkIcon className="w-3 h-3 text-zinc-400 group-hover:text-blue-500 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-zinc-900 dark:text-white truncate">{resource.name}</div>
+                            <div className="text-xs text-zinc-500 truncate">{resource.specialty}</div>
+                          </div>
+                        </a>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Suggestions */}
+                  {aiResponse.suggestions && aiResponse.suggestions.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 pt-2">
+                      {aiResponse.suggestions.slice(0, 4).map((suggestion, i) => (
+                        <button
+                          key={i}
+                          onClick={() => {
+                            setQuery(`? ${suggestion}`);
+                            askAI(suggestion);
+                          }}
+                          className="px-2.5 py-1 text-xs rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-blue-100 dark:hover:bg-blue-900/30 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                        >
+                          {suggestion.length > 35 ? suggestion.slice(0, 35) + "..." : suggestion}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Command List */}
           <div ref={listRef} className="max-h-[50vh] overflow-y-auto p-2">
@@ -319,15 +458,28 @@ export default function CommandPalette({ additionalCommands = [] }: CommandPalet
           {/* Footer */}
           <div className="px-4 py-3 border-t border-zinc-200 dark:border-zinc-700 flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
             <div className="flex items-center gap-4">
-              <span className="flex items-center gap-1">
-                <KeyboardShortcutHint keys="↑" /> <KeyboardShortcutHint keys="↓" /> to navigate
-              </span>
-              <span className="flex items-center gap-1">
-                <KeyboardShortcutHint keys="Enter" /> to select
-              </span>
+              {aiMode ? (
+                <span className="flex items-center gap-1">
+                  <KeyboardShortcutHint keys="Enter" /> to ask
+                </span>
+              ) : (
+                <>
+                  <span className="flex items-center gap-1">
+                    <KeyboardShortcutHint keys="↑" /> <KeyboardShortcutHint keys="↓" /> to navigate
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <KeyboardShortcutHint keys="Enter" /> to select
+                  </span>
+                </>
+              )}
             </div>
-            <span className="flex items-center gap-1">
-              <KeyboardShortcutHint keys="Ctrl + K" /> to open
+            <span className="flex items-center gap-2">
+              <span className="flex items-center gap-1">
+                <KeyboardShortcutHint keys="?" /> AI mode
+              </span>
+              <span className="flex items-center gap-1">
+                <KeyboardShortcutHint keys="Ctrl + K" /> to open
+              </span>
             </span>
           </div>
         </div>
