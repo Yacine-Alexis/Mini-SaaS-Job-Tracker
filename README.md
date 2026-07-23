@@ -22,6 +22,30 @@
 </p>
 
 ---
+## Project status
+
+This is an experimental learning project and is not intended for production use.
+
+## AI-assisted development
+
+AI coding tools were used extensively for scaffolding and implementation.
+I am reviewing the project incrementally to understand, test and rewrite its
+main components.
+
+## What I personally worked on
+
+- Defined the application idea and desired workflow
+- Configured the local development environment
+- Ran the application and tested selected user flows
+- Worked with Docker and PostgreSQL configuration
+- Reviewed and documented selected features
+
+## Known limitations
+
+- Parts of the generated code have not been manually reviewed
+- Security has not been independently audited
+- Deployment instructions may require additional configuration
+- Some features remain experimental
 
 ## 🌟 Overview
 
